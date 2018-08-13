@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>File Manager</title>
+</head>
+
+<body>
+
+<div id="header">
+	<a id="logout" href="#">Logout</a>
+	<h1>File Manager</h1>
+</div>
+
+<div id="login" class="container">
+	<div class="row">
+		<div class="twelve columns">
+			<div id="login-errors" class="errors"></div>
+			<form id="login-form">
+					<input type="password" id="password">
+					<input type="submit" value="Login">
+			</form>
+		</div>
+	</div>
+</div>
+
+<div id="dir-errors" class="errors"></div>
+<div id="manager" class="row">
+	<div class="three columns subdirs">
+		<form id="subdirs-form">
+			<input type="hidden" id="subdirs-action">
+			<input type="text" id="path"> <input type="submit" value="Go">
+			<br />
+			<select id="subdirs" size="20" multiple></select>
+			<br />
+			<input type="submit" value="Up">
+			<input type="submit" value="New">
+			<input type="submit" value="Rename">
+			<br />
+			<input type="submit" value="Move">
+			<input type="submit" value="Delete">
+			<input type="submit" value="Kill">
+			<br />
+			<label for="pattern">Pattern </label><input type="text" id="pattern">
+			<br />
+			<label for="replace">Replace </label><input type="text" id="replace">
+			<br />
+			<input id="smart-rename" type="submit" value="Smart Rename">
+			<input id="smart-rename-confirm" type="submit" value="Confirm">
+			<input id="smart-rename-clear" type="submit" value="Clear">
+		</form>
+	</div>
+	<div class="nine columns files">
+		<table class="files">
+			<thead class="files">
+				<tr>
+					<th width="1"><input type="checkbox" id="check-all" class="files"></th>
+					<th id="file-name" class="files col-name">Name</th>
+					<th id="file-size" class="files col-size">Size</th>
+					<th id="file-owner" class="files col-owner">Owner</th>
+					<th id="file-group" class="files col-group">Group</th>
+					<th id="file-perms" class="files col-perms">Permissions</th>
+					<th id="file-created" class="files col-created">Created</th>
+					<th id="file-modified" class="files col-modified">Modified</th>
+				</tr>
+			</thead>
+			<tbody id="files"></tbody>
+		</table>
+		<form id="files-form">
+			<input type="hidden" id="files-action">
+			<input type="submit" value="New"> <input type="submit" value="Copy"> <input type="submit" value="Move"> <input type="submit" value="Rename"> <input type="submit" value="Delete"> <input type="submit" value="Edit">
+		</form>
+	</div>
+</div>
+
+<div id="edit-box">
+	<form id="edit-form">
+		<textarea id="edit" rows="20"></textarea>
+		<br />
+		<input type="hidden" id="edit-action">
+		<input type="submit" value="Save"> <input type="submit" value="Save &amp; Close"> <input type="submit" value="Close">
+	</form>
+</div>
+
+<div id="column-context">
+	<label><input type="checkbox" class="column-sel" id="chkbx-name" checked> Name</label>
+	<label><input type="checkbox" class="column-sel" id="chkbx-size" checked> Size</label>
+	<label><input type="checkbox" class="column-sel" id="chkbx-owner" checked> Owner</label>
+	<label><input type="checkbox" class="column-sel" id="chkbx-group" checked> Group</label>
+	<label><input type="checkbox" class="column-sel" id="chkbx-perms" checked> Permissions</label>
+	<label><input type="checkbox" class="column-sel" id="chkbx-created" checked> Created</label>
+	<label><input type="checkbox" class="column-sel" id="chkbx-modified" checked> Modified</label>
+</div>
+
+<div id="clear-cover"></div>
+
+</body>
+</html>
