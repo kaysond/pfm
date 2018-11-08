@@ -11,7 +11,7 @@ define("HASH_ITERATION_INDEX", 1);
 define("HASH_SALT_INDEX", 2);
 define("HASH_PBKDF2_INDEX", 3);
 
-define("USER_FILE", "/var/www_config/userfile.txt");
+define("USER_FILE", "/var/www_config/userfile.json");
 define("FAILED_ATTEMPTS", 5);
 define("DISABLE_IP_CHECK", false);
 

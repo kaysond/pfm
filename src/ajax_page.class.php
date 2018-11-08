@@ -5,8 +5,8 @@ require_once "DOMDocumentPlus.class.php";
 require_once "secure_login_session.class.php";
 class ajax_page {
 	public $DOM, $XPath;
-	private $html, $js, $css, $session;
-	private  $ajax_callbacks = array();
+	private $html, $js, $inline_js, $css, $ajax_callbacks = array();
+	private $session;
 
 	public function __construct($html_file, string $session = "") {
 		$this->html[] = $html_file;
@@ -26,6 +26,10 @@ class ajax_page {
 
 	public function add_js($js_file) {
 		$this->js[] = $js_file;
+	}
+
+	public function add_inline_js($js) {
+		$this->inline_js[] = $js;
 	}
 
 	public function add_html($html_file) {
@@ -88,13 +92,18 @@ class ajax_page {
         $this->XPath = new DOMXPath($this->DOM);
 
         //Add JS
-        foreach($this->js as $js_file) {
+        foreach ($this->js as $js_file) {
                 $element = $this->DOM->loadElement("<script type='text/javascript' src='$js_file'>");
                 $this->DOM->getElementsByTagName("head")->item(0)->appendChild($element);
         }
 
+        foreach ($this->inline_js as $inline_js) {
+                $element = $this->DOM->loadElement("<script type='text/javascript'>$inline_js</script>");
+                $this->DOM->getElementsByTagName("head")->item(0)->appendChild($element);
+        }
+
         //Add CSS
-        foreach($this->css as $css_file) {
+        foreach ($this->css as $css_file) {
                 $element = $this->DOM->loadElement("<link rel='stylesheet' type='text/css' href='$css_file'>");
                 $this->DOM->getElementsByTagName("head")->item(0)->appendChild($element);
         }

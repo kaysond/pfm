@@ -16,7 +16,6 @@ var dir = {
 					$("#path").val(this.path)
 				}
 				else {
-					
 					this.update(data)
 				}
 			}
@@ -46,9 +45,9 @@ var dir = {
 
 		$("#subdirs").empty()
 		if (this.path != "/")
-			$("#subdirs").append($("<option>").val("..").text(".."))
+			$("#subdirs").append($("<tr class='subdir'><td class='subdir'>..</td></tr>"))
 		this.subdirs.forEach(function(subdir) {
-			$("#subdirs").append($("<option>").val(subdir).text(subdir))
+			$("#subdirs").append($("<tr class='subdir'>").append($("<td class='subdir'>").text(subdir).attr("title", subdir)))
 		})
 
 		$("#check-all").prop("checked", false)
@@ -56,8 +55,16 @@ var dir = {
 		$("#files").empty()
 		var file_path = this.path == "/" ? "" : this.path
 		this.files.forEach(file => {
-			var checkbox = $("<td>").append($(`<input class="files" type="checkbox" value="${file.name}">`))
-			var name = $("<td class='col-name'>").append($(`<a href="${file_path}/${file.name}" target="_BLANK" title="${file.name}">${file.name}</a>`))
+			var checkbox = $(`<input class="files" type="checkbox" value="${file.name}">`)
+			checkbox.change(function(e) {
+				var row = $(this).parent().parent("tr")
+				if ($(this).prop("checked"))
+					row.addClass("selected")
+				else
+					row.removeClass("selected")
+			})
+			checkbox = $("<td class='col-checked'>").append(checkbox)
+			var name = $("<td class='col-name'>").append($(`<a href="${this.baseURLPath}${file_path}/${file.name}" target="_BLANK" title="${file.name}">${file.name}</a>`))
 			if (!$("#chkbx-name").prop("checked"))
 				name.hide()
 			var size = $("<td class='col-size'>").text(dir.formatSize(file.size))
@@ -210,7 +217,7 @@ var dir = {
 		}
 
 		$.post({
-			url: "?rename_dir",
+			url: "?rename",
 			data: {"path": this.path,
 				"from": from,
 				"to": to},
@@ -253,9 +260,14 @@ var dir = {
 			}
 		})
 	},
-	smartRenameTest: function(pattern, replace) {
+	getSelectedSubdirs: function() {
+		return $("li.subdir.selected").map(function() {
+			return $(this).text()
+		})
+	},
+	regexRenameTest: function(pattern, replace) {
 		$.post({
-			url: "?smart_rename_test",
+			url: "?regex_rename_test",
 			data: {"path": this.path,
 				"pattern": pattern,
 				"replace": replace
@@ -268,14 +280,14 @@ var dir = {
 				else {
 					this.pattern = pattern
 					this.replace = replace
-					this.showSmartRenames(data.renames)
+					this.showRegexRenames(data.renames)
 				}
 			}
 		})
 	},
-	smartRename: function() {
+	regexRename: function() {
 		$.post({
-			url: "?smart_rename",
+			url: "?regex_rename",
 			data: {"path": this.path,
 				"pattern": this.pattern,
 				"replace": this.replace,
@@ -321,6 +333,64 @@ var dir = {
 			}
 		})
 	},
+	moveFiles: function(names, to) {
+		if (names == null)
+			return
+		for (var i = 0; i < names.length; i++) {
+			if (!this.files.map(file => {return file.name}).includes(names[i])) {
+				this.error(`File "${names[i]}" does not exist`)
+				return
+			}
+		}
+
+		$.post({
+			url: "?move",
+			data: {"path": this.path,
+				"names[]": names,
+				"to": to},
+			dataType: "json",
+			success: data => {
+				if (data.error || !data.success) {
+					this.error(data.error ? data.error : "An unknown error occurred")
+					if (data.path && data.subdirs && data.files) { //partially successful deletion
+						this.update(data)
+					}
+				}
+				else {
+					this.update(data)
+				}
+			}
+		})
+	},
+	copyFiles: function(names, to) {
+		if (names == null)
+			return
+		for (var i = 0; i < names.length; i++) {
+			if (!this.files.map(file => {return file.name}).includes(names[i])) {
+				this.error(`File "${names[i]}" does not exist`)
+				return
+			}
+		}
+
+		$.post({
+			url: "?copy",
+			data: {"path": this.path,
+				"names[]": names,
+				"to": to},
+			dataType: "json",
+			success: data => {
+				if (data.error || !data.success) {
+					this.error(data.error ? data.error : "An unknown error occurred")
+					if (data.path && data.subdirs && data.files) { //partially successful deletion
+						this.update(data)
+					}
+				}
+				else {
+					this.update(data)
+				}
+			}
+		})
+	},
 	renameFile: function(from, to) {
 		if (to == null)
 			return
@@ -336,7 +406,7 @@ var dir = {
 		}
 
 		$.post({
-			url: "?rename_file",
+			url: "?rename",
 			data: {"path": this.path,
 				"from": from,
 				"to": to},
@@ -404,7 +474,7 @@ var dir = {
 					this.error(data.error ? data.error : "An unknown error occurred")
 				}
 				else {
-					//Should toast!
+					$(`td.col-name > a:contains("${dir.openFile}")`).parent().parent().find("td.col-size").text(dir.formatSize(data.filesize))
 					console.log("Successfully saved file")
 				}
 			}
@@ -418,7 +488,7 @@ var dir = {
 	},
 	clear: function() {
 		$("#path").val("")
-		$("#subdirs").empty()
+		$("ul.subdirs").empty()
 		$("#pattern").val("")
 		$("#replace").val("")
 		$("#edit").val("")
@@ -440,29 +510,78 @@ var dir = {
 	getCheckedFiles: function() {
 		return $("input.files:checked").map(function() { return $(this).val() }).get()
 	},
-	showSmartRenames: function(renames) {
-		$("#smart-rename").hide()
+	showRegexRenames: function(renames) {
+		$("#regex-rename").hide()
 		$("#pattern").prop("disabled", true)
 		$("#replace").prop("disabled", true)
-		$("#smart-rename-confirm").show()
-		$("#smart-rename-clear").show()
+		$("#regex-rename-confirm").show()
+		$("#regex-rename-clear").show()
 		renames.forEach(rename => {
-			$(`td.col-name:contains("${rename.from}")`).append($(`<span><br />&emsp;&#x27A5; ${rename.to}</span>`))
+			$(`td.col-name`).filter(function() { 
+				return $(this).text() === rename.from
+			}).append($(`<span><br />&emsp;&#x27A5; ${rename.to}</span>`))
 		})
 	},
-	clearSmartRenames: function() {
+	clearRegexRenames: function() {
 		$("td.col-name > span").remove()
-		$("#smart-rename").show()
-		$("#smart-rename-confirm").hide()
-		$("#smart-rename-clear").hide()
+		$("#regex-rename").show()
+		$("#regex-rename-confirm").hide()
+		$("#regex-rename-clear").hide()
 		$("#pattern").prop("disabled", false)
 		$("#replace").prop("disabled", false)
 		this.pattern = ""
 		this.replace = ""
+	},
+	populateDirSelect: function() {
+		var li = $("<li class='dir-select'>").append($("<span class='dir-select'>").text("/"))
+		li.append($("<input type='hidden'>").val("/"))
+		$("#dir-select > ul.dir-select").empty()
+		$("#dir-select > ul.dir-select").append(li)
+		this.selectDir($("span.dir-select"))
+		$("#clear-cover").show()
+		$("#dir-select").show()
+	},
+	selectDir: function(ele) {
+		$("span.dir-select.selected").removeClass("selected")
+		ele.addClass("selected")
+		if (ele.siblings().length < 2) {
+			path = ele.siblings("input").val()
+			$.post({
+				url: "?get_subdirs",
+				data: {"path": path},
+				dataType: "json",
+				success: data => {
+					if (data.error || !data.success) {
+						this.error(data.error ? data.error : "An unknown error occurred")
+					}
+					else if (data.path != path) {
+						this.error("Server returned unexpected path")
+					}
+					else {
+						if (path == "/")
+							path = ""
+						if (data.subdirs.length > 0) {
+							ele.parent().append($("<ul class='dir-select'>"))
+							ul = ele.siblings().last()
+							data.subdirs.forEach(function(subdir) {
+								var li = $("<li class='dir-select'>").append($("<span class='dir-select'>").text(subdir))
+								li.append($("<input type='hidden'>").val(path + "/" + subdir))
+								ul.append(li)
+							})
+						}
+					}
+				}
+			})
+		}
+	},
+	getSelectedDir: function() {
+		return $("span.dir-select.selected").eq(0).siblings("input").val()
 	}
 }
 
 $(function() {
+	$("#header").hide()
+	$("#manager").hide()
 	$.post({
 		url: "?is_logged_in",
 		dataType: "json",
@@ -477,6 +596,7 @@ $(function() {
 				else {
 					dir.refresh("/")
 				}
+				$("#header").show()
 				$("#manager").show()
 			}
 			else {
@@ -489,7 +609,7 @@ $(function() {
 	$("#login-form").submit(function(e) {
 		$.post({
 			url: "?login",
-			data: {"username":"files","password":$("#password").val()},
+			data: {"username":"test","password":$("#password").val()},
 			dataType: "json",
 			success: function(data) {
 				if (data.error || !data.success) {
@@ -499,6 +619,7 @@ $(function() {
 					$("#login-errors").text("").hide()
 					$("#login").hide()
 					dir.refresh("/").done(function() {
+						$("#header").show()
 						$("#manager").show()
 					})
 				}
@@ -515,6 +636,7 @@ $(function() {
 			success: function(data) {
 				if (data.success) {
 					dir.clear()
+					$("#header").hide()
 					$("#manager").hide()
 					dir.clearErrors()
 					$("#login").show()
@@ -532,6 +654,8 @@ $(function() {
 	})
 	$("#subdirs-form").submit(function(e) {
 		dir.clearErrors()
+		$("div.ribbon").hide()
+		$("ul.ribbon li.selected").removeClass("selected")
 		switch ($("#subdirs-action").val()) {
 			case "go":
 				dir.refresh($("#path").val())
@@ -543,47 +667,36 @@ $(function() {
 				dir.makeDir(prompt("Enter new directory name:"))
 				break
 			case "delete":
-				if ($("#subdirs").val().length > 0)
-					dir.removeDirs($("#subdirs").val())
+				var selectedSubdirs = dir.getSelectedSubdirs()
+				var l = selectedSubdirs.length
+				var plural = l > 1 ? "ies" : "y"
+				if (selectedSubdirs.length > 0 && confirm(`Do you really want to delete ${l} director${plural}? This cannot be undone`))
+					dir.removeDirs(selectedSubdirs)
 				break
 			case "rename":
-				var subdir_selection = $("#subdirs").val()
-				if (subdir_selection.length != 1) {
+				var selectedSubdirs = dir.getSelectedSubdirs()
+				if (selectedSubdirs.length != 1) {
 					dir.error("Only one directory may be renamed at a a time")
 				}
 				else {
-					dir.renameDir(subdir_selection[0], prompt("Enter new directory name:"))
+					dir.renameDir(selectedSubdirs[0], prompt("Enter new directory name:"))
 				}
 				break
 			case "kill":
-				var l = $("#subdirs").val().length
+				var selectedSubdirs = dir.getSelectedSubdirs()
+				var l = selectedSubdirs.length
 				var plural = l > 1 ? "ies" : "y"
-				if (l > 0 && confirm("Do you really want to kill " + l + " director" + plural + "? This cannot be undone."))
-					dir.killDirs($("#subdirs").val())
+				if (selectedSubdirs.length > 0 && confirm(`Do you really want to kill ${l} director${plural}? This cannot be undone`))
+					dir.killDirs(selectedSubdirs)
 				break
-			case "smart rename":
-				if ($("#pattern").val() != "") {
-					dir.smartRenameTest($("#pattern").val(), $("#replace").val())
-				}
+			case "select all":
+				if ($("tr.subdir.selected").length == $("tr.subdir").length)
+					$("tr.subdir").removeClass("selected")
+				else
+					$("tr.subdir").addClass("selected")
 				break
 		}
 		e.preventDefault()
-	})
-
-	$("#subdirs").dblclick(function(e) {
-		if ($(e.target).is("option")) {
-			dir.clearErrors()
-			dir.refresh($("#path").val() + "/" + $(e.target).val())
-			$("#subdirs").blur()
-		}
-	})
-
-	$("#subdirs").keyup(function(e) {
-		if (e.key == "Enter" && $("#subdirs").val().length > 0) {
-			dir.clearErrors()
-			dir.refresh($("#path").val() + "/" + $("#subdirs").val()[0])
-			$("#subdirs").blur()
-		}
 	})
 
 	$("#dir-errors").click(function(e) {
@@ -606,20 +719,30 @@ $(function() {
 
 	$("#files-form").submit(function(e) {
 		dir.clearErrors()
+		$("div.ribbon").hide()
+		$("ul.ribbon li.selected").removeClass("selected")
 		switch ($("#files-action").val()) {
 			case "delete":
 				var files = dir.getCheckedFiles()
-				if (files.length > 0 && confirm("Do you really want to delete " + files.length + " files? This cannot be undone"))
+				if (files.length < 1)
+					dir.error("No files selected for deletion")
+				else if (confirm("Do you really want to delete " + files.length + " files? This cannot be undone"))
 					dir.delete(files)
 				break
 			case "rename":
 				var files = dir.getCheckedFiles()
-				if (files.length != 1) {
+				if (files.length < 1) {
+					dir.error("No file selected for rename")
+				}
+				else if (files.length != 1) {
 					dir.error("Only one file may be renamed at a time")
 				}
 				else {
 					dir.renameFile(files[0], prompt("Enter new file name:"))
 				}
+				break
+			case "regex rename":
+				$("div.ribbon.regex-rename").show()
 				break
 			case "kill":
 				var l = $("#subdirs").val().length
@@ -639,8 +762,21 @@ $(function() {
 					dir.editFile(checkedFiles[0])
 				}
 				break
+			case "move":
+			case "copy":
+				if (dir.getCheckedFiles().length < 1) {
+					dir.error("No files selected")
+				}
+				else {
+					dir.populateDirSelect()
+					dir.dirSelectType = "file"
+				}
 		}
 		e.preventDefault();
+	})
+
+	$("#go").click(function(e) {
+		dir.refresh($("#path").val())
 	})
 
 	$("#edit-form > input[type='submit']").click(function(e) {
@@ -667,26 +803,31 @@ $(function() {
 				break			
 		}
 		e.preventDefault();
-	})	
-
-	$("#smart-rename-clear").click(function(e) {
-		dir.clearSmartRenames()
-		e.preventDefault()
 	})
 
-	$("#smart-rename-confirm").click(function(e) {
-		dir.smartRename()
-		dir.clearSmartRenames()
-		e.preventDefault()
+	$("#regex-rename").click(function(e) {
+		if ($("#pattern").val() != "") {
+			dir.regexRenameTest($("#pattern").val(), $("#replace").val())
+		}
+	})
+
+	$("#regex-rename-clear").click(function(e) {
+		dir.clearRegexRenames()
+	})
+
+	$("#regex-rename-confirm").click(function(e) {
+		dir.regexRename()
+		dir.clearRegexRenames()
 	})
 
 	$("form").submit(function(e) {
 		$("td.col-name > span").remove()
-		$("#smart-rename").show()
-		$("#smart-rename-confirm").hide()
-		$("#smart-rename-clear").hide()
+		$("#regex-rename").show()
+		$("#regex-rename-confirm").hide()
+		$("#regex-rename-clear").hide()
 		$("#pattern").prop("disabled", false)
 		$("#replace").prop("disabled", false)
+		$("#clear-cover").hide()
 	})
 
 	$("thead.files").contextmenu(function(e) {
@@ -695,9 +836,28 @@ $(function() {
 		e.preventDefault()
 	})
 
+	$("#dir-select-cancel").click(function(e) {
+		$("#clear-cover").hide()
+		$("#dir-select").hide()
+	})
+
+	$("#dir-select-select").click(function(e) {
+		if (dir.dirSelectType == "file") {
+			if ($("#files-action").val() == "copy")
+				dir.copyFiles(dir.getCheckedFiles(), dir.getSelectedDir())
+			else if ($("#files-action").val() == "move")
+				dir.moveFiles(dir.getCheckedFiles(), dir.getSelectedDir())
+		}
+		$("#clear-cover").hide()
+		$("#dir-select").hide()
+	})
+
 	$("#clear-cover").click(function(e) {
 		$("#clear-cover").hide()
 		$("#column-context").hide()
+		$("#dir-select").hide()
+		$("ul.ribbon li.selected").removeClass("selected")
+		$("div.ribbon").hide()
 	})
 
 	$("#clear-cover, #column-context").contextmenu(function(e) {
@@ -717,21 +877,79 @@ $(function() {
 			if ($("#clear-cover").is(":visible")) {
 				$("#clear-cover").hide()
 				$("#column-context").hide()
+				$("#dir-select").hide()
+				$("ul.ribbon li.selected").removeClass("selected")
+				$("div.ribbon").hide()
 			}
 			else if (dir.pattern != "") {
-				dir.clearSmartRenames()
+				dir.clearRegexRenames()
 			}
 		}
 	})
 
 	$("#check-all").change(function(e) {
-			$("input[type='checkbox']").prop("checked", $("#check-all")[0].checked)
+			if($("#check-all").prop("checked")) {
+				$("#files tr input[type='checkbox']").prop("checked", true)
+				$("#files tr").addClass("selected")
+			}
+			else {
+				$("#files tr input[type='checkbox']").prop("checked", false)
+				$("#files tr").removeClass("selected")				
+			}
 	})
 
 	$("#files").on("click", "tr", function(e) {
 		if (!$(e.target).is("a,input")) {
 			var checkbox = $(this).find("td > input").first()
-			checkbox.prop("checked", !checkbox.prop("checked"))
+			if (checkbox.prop("checked")) {
+				checkbox.prop("checked", false)
+				$(this).removeClass("selected")
+			}
+			else {
+				checkbox.prop("checked", true)
+				$(this).addClass("selected")
+			}
+
+		}
+	})
+
+	$("#subdirs").on("click", "tr", function(e) {
+		if (this.className.includes("selected"))
+			$(this).removeClass("selected")
+		else
+			$(this).addClass("selected")
+	})
+
+	$("#subdirs").on("dblclick", "tr", function(e) {
+		dir.refresh(dir.path + "/" + $(this).text())
+		e.preventDefault()
+	})
+
+	//Prevent selection on dblclick
+	$("#subdirs").mousedown(function(e) {
+		e.preventDefault()
+	})
+
+	$("#dir-select").on("click", "span", function(e) {
+		dir.selectDir($(this))
+	})
+
+	$("#files").on("contextmenu", "tr", function(e) {
+		alert("CONTEXT")
+		e.preventDefault()
+	})
+
+	$("ul.ribbon").on("click", "li", function(e) {
+		if (this.className.includes("selected")) {
+			$("ul.ribbon li.selected").removeClass("selected")
+			$("div.ribbon").hide()
+		}
+		else {
+			$("div.ribbon").hide()
+			$("div.ribbon." + this.className).show()
+			$("ul.ribbon li.selected").removeClass("selected")
+			$(this).addClass("selected")
+			$("#clear-cover").show()
 		}
 	})
 

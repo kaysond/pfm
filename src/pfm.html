@@ -3,15 +3,62 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>File Manager</title>
+	<title>PHP File Manager</title>
 </head>
 
 <body>
 
 <div id="header">
-	<a id="logout" href="#">Logout</a>
-	<h1>File Manager</h1>
+	<div class="menu">
+		<ul class="ribbon">
+			<li class="subdirs">Subdirectories</li>
+			<li class="files-menu">Files</li>
+		</ul>		
+		<input type="text" id="path"> <input type="submit" value="Go" id="go">
+	</div>
+	<div class="title">PHP File Manager</div>
+	<div class="logout"><a id="logout" href="#">Logout</a></div>
 </div>
+
+<div class="ribbon subdirs">
+	<form id="subdirs-form">
+		<input type="hidden" id="subdirs-action">
+		<input type="submit" value="Up">
+		<input type="submit" value="New">
+		<input type="submit" value="Rename">
+		<input type="submit" value="Copy">
+		<input type="submit" value="Move">
+		<input type="submit" value="Delete">
+		<input type="submit" value="Kill">
+		<input type="submit" value="Select All">
+	</form>
+</div>
+
+<div class="ribbon files-menu">
+	<form id="files-form">
+		<input type="hidden" id="files-action">
+		<input type="submit" value="New">
+		<input type="submit" value="Rename">
+		<input type="submit" value="Regex Rename">
+		<input type="submit" value="Move">
+		<input type="submit" value="Copy">
+		<input type="submit" value="Delete">
+		<input type="submit" value="Edit">
+		<input type="submit" value="Upload">
+	</form>
+</div>
+
+<div class="ribbon regex-rename">
+	<form id="regex-rename-form">
+		<label for="pattern">Pattern </label><input type="text" id="pattern">
+		<label for="replace">Replace </label><input type="text" id="replace">
+		<input id="regex-rename" type="submit" value="Regex Rename">
+		<input id="regex-rename-confirm" type="button" value="Confirm">
+		<input id="regex-rename-clear" type="button" value="Clear">
+	</form>
+</div>
+
+<div class="header-dummy">PHP File Manager</div>
 
 <div id="login" class="container">
 	<div class="row">
@@ -26,36 +73,17 @@
 </div>
 
 <div id="dir-errors" class="errors"></div>
-<div id="manager" class="row">
-	<div class="three columns subdirs">
-		<form id="subdirs-form">
-			<input type="hidden" id="subdirs-action">
-			<input type="text" id="path"> <input type="submit" value="Go">
-			<br />
-			<select id="subdirs" size="20" multiple></select>
-			<br />
-			<input type="submit" value="Up">
-			<input type="submit" value="New">
-			<input type="submit" value="Rename">
-			<br />
-			<input type="submit" value="Move">
-			<input type="submit" value="Delete">
-			<input type="submit" value="Kill">
-			<br />
-			<label for="pattern">Pattern </label><input type="text" id="pattern">
-			<br />
-			<label for="replace">Replace </label><input type="text" id="replace">
-			<br />
-			<input id="smart-rename" type="submit" value="Smart Rename">
-			<input id="smart-rename-confirm" type="submit" value="Confirm">
-			<input id="smart-rename-clear" type="submit" value="Clear">
-		</form>
+<div id="manager">
+	<div class="subdirs">
+		<table class="subdirs">
+			<tbody id="subdirs"></tbody>
+		</table>
 	</div>
-	<div class="nine columns files">
+	<div class="files">
 		<table class="files">
 			<thead class="files">
 				<tr>
-					<th width="1"><input type="checkbox" id="check-all" class="files"></th>
+					<th width="1"><input type="checkbox" id="check-all"></th>
 					<th id="file-name" class="files col-name">Name</th>
 					<th id="file-size" class="files col-size">Size</th>
 					<th id="file-owner" class="files col-owner">Owner</th>
@@ -67,11 +95,12 @@
 			</thead>
 			<tbody id="files"></tbody>
 		</table>
-		<form id="files-form">
-			<input type="hidden" id="files-action">
-			<input type="submit" value="New"> <input type="submit" value="Copy"> <input type="submit" value="Move"> <input type="submit" value="Rename"> <input type="submit" value="Delete"> <input type="submit" value="Edit">
-		</form>
 	</div>
+</div>
+
+<div id="dir-select">
+	<ul class="dir-select"></ul>
+	<input type="button" value="Select" id="dir-select-select"> <input type="submit" value="Cancel" id="dir-select-cancel">
 </div>
 
 <div id="edit-box">

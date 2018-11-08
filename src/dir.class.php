@@ -1,8 +1,7 @@
 <?php
-class dir
-{
-	private $path, $chroot_path, $invalid_chars = "";
-	private $dir_tree, $subdirs, $files, $errors  = array();
+class dir {
+	private $full_path, $chroot_path, $invalid_chars = "";
+	private $subdirs, $files, $errors  = array();
 
 	public function __construct($path, $chroot_path) {
 		$this->chroot_path = realpath($chroot_path);
@@ -37,13 +36,14 @@ class dir
 			else
 				return false;
 		}
-		else { //Could be a filename or subdirectory relative to the current path
+		elseif ($this->full_path) { //Could be a filename or subdirectory relative to the current path
 			$realpath = realpath($this->full_path . DIRECTORY_SEPARATOR . $path);
 			if ($realpath !== false && substr($realpath, 0, strlen($this->chroot_path)) == $this->chroot_path)
 				return $realpath;
 			else
 				return false;
 		}
+		return false;
 	}
 
 	private function is_valid_filename($file) {
@@ -59,7 +59,7 @@ class dir
 		$this->errors[] = $message;
 	}
 
-	private function find_file($file_name) {
+	private function is_file($file_name) {
 		foreach ($this->files as $file)
 			if ($file_name == $file->name)
 				return true;
@@ -67,19 +67,34 @@ class dir
 		return false;
 	}
 
+	private function is_subdir($subdir) {
+		return in_array($subdir, $this->subdirs);
+	}
+
+	public function get_file($file_name) {
+		foreach ($this->files as $file)
+			if ($file_name == $file->name)
+				return $file;
+
+		return file;
+	}
+
 	public function refresh() {
 		if (@$contents = scandir($this->full_path)) {
 			$this->files = array();
 			$this->subdirs = array();
-			foreach ($contents as $file) {
-				switch (filetype($this->full_path . DIRECTORY_SEPARATOR . $file)) {
+			foreach ($contents as $dir_file) {
+				switch (filetype($this->full_path . DIRECTORY_SEPARATOR . $dir_file)) {
 					case "dir":
-						if ($file != ".." && $file != ".")
-							$this->subdirs[] = $file;
+						if ($dir_file != ".." && $dir_file != ".")
+							$this->subdirs[] = $dir_file;
 						break;
 					case "file":
-						$this->files[] = new file($file, $this->full_path);
+						$this->files[] = new file($dir_file, $this->full_path);
 						break;
+					case "link":
+						if ($this->sanitize_path($dir_file))
+							$this->files[] = new file($dir_file, $this->full_path);
 					default:
 						break;
 				}
@@ -142,49 +157,54 @@ class dir
 		return $this->files;
 	}
 
-	public function rename_file($file, $to) {
-		if (!$this->find_file($file)) {
-			$this->error("Could not find \"$file\"");
+	public function rename($from, $to) {
+		if (!$this->is_file($from) && !$this->is_subdir($from)) {
+			$this->error("Could not find \"$from\"");
+			return false;
+		}
+
+		if ($this->is_file($to) || $this->is_subdir($to)) {
+			$this->error("\"$to\" already exists");
 			return false;
 		}
 
 		if (!$this->is_valid_filename($to)) {
-			$this->error("Invalid target for file rename: \"$to\"");
+			$this->error("Invalid target for rename: \"$to\"");
 			return false;
 		}
 
-		if (@rename($this->full_path . DIRECTORY_SEPARATOR . $file, $this->full_path . DIRECTORY_SEPARATOR . $to)) {
+		if (@rename($this->full_path . DIRECTORY_SEPARATOR . $from, $this->full_path . DIRECTORY_SEPARATOR . $to)) {
 			$this->refresh();
 			return true;
 		}
 		else {
-			$this->error("Could not rename \"$file\" to \"$to\"");
+			$this->error("Could not rename \"$from\" to \"$to\"");
 			return false;
 		}
 	}
 
-	public function smart_rename($pattern, $replace) {
+	public function regex_rename($pattern, $replace) {
 		if ($pattern == "") {
 			$this->error("Pattern not specified");
 			return false;
 		}
 
-		$flagError = false;
+		$no_errors = true;
 		foreach ($this->files as $file) {
 			if (preg_match($pattern, $file->name)) {
-				if (!$this->rename_file($file->name, preg_replace($pattern, $replace, $file->name))) {
-					$flagError = true;
+				if (!$this->rename($file->name, preg_replace($pattern, $replace, $file->name))) {
+					$no_errors = false;
 				}
 			}
 		}
-		if ($flagError)
+		if (!$no_errors)
 			$this->error("Could not rename all files. Partial rename may have occurred");
 
 		$this->refresh();
-		return !$flagError;
+		return $no_errors;
 	}
 
-	public function smart_rename_test($pattern, $replace) {
+	public function regex_rename_test($pattern, $replace) {
 		if ($pattern == "") {
 			$this->error("Pattern not specified");
 			return false;
@@ -199,85 +219,29 @@ class dir
 		return $renames;
 	}
 
-	public function copy_files($files, $to_dir) {
-		if (is_string($files))
-			$files = array($files);
-		if (!is_array($files) || count($files) < 1)
-			return false;
-
-		$to = $this->sanitize_path($to_dir);
-		if ($to === false) {
-			$this->error("Invalid destination path");
-			return false;
-		}
-
-		$flagError = false;
-		foreach ($files as $file) {
-			if (!$this->find_file($file)) {
-				$this->error("Could not find \"$file\"");
-				$flagError = true;
-				continue;
-			}
-			if (@!copy($this->full_path . DIRECTORY_SEPARATOR . $file, $to. DIRECTORY_SEPARATOR . $file)) {
-				$this->error("Could not copy \"$file\" to $to");
-				$flagError = false;
-			}
-		}
-		$this->refresh();
-		return !$flagError;
-	}
-
-	public function move_files($files, $to_dir) {
-		if (is_string($files))
-			$files = array($files);
-		if (!is_array($files) || count($files) < 1)
-			return false;
-
-		$to = $this->sanitize_path($to_dir);
-		if ($to === false) {
-			$this->error("Invalid destination path");
-			return false;
-		}
-
-		$flagError = false;
-		foreach ($files as $file) {
-			if (!$this->find_file($file)) {
-				$this->error("Could not find \"$file\"");
-				$flagError = true;
-				continue;
-			}
-			if (@!rename($this->full_path . DIRECTORY_SEPARATOR . $file, $to. DIRECTORY_SEPARATOR . $file)) {
-				$this->error("Could not move \"$file\" to \"$to\"");
-				$flagError = false;
-			}
-		}
-		$this->refresh();
-		return !$flagError;
-	}
-
 	public function delete($files) {
 		if (is_string($files)) 
-			$file = array($files);
+			$files = array($files);
 		if (!is_array($files) || count($files) < 1)
 			return false;
 
-		$errFlag = false;
+		$no_errors = true;
 		foreach($files as $file) {
-			if (!$this->find_file($file)) {
+			if (!$this->is_file($file)) {
 				$this->error("Could not find \"$file\"");
-				$errFlag = true;
+				$no_errors = false;
 			}
 			else if (@!unlink($this->full_path . DIRECTORY_SEPARATOR . $file)) {
 				$this->error("Could not delete \"$file\"");
-				$errFlag = true;
+				$no_errors = false;
 			}
 		}
 		$this->refresh();
-		return !$errFlag;
+		return $no_errors;
 	}
 
 	public function write_file($file, $contents) {
-		if (!$this->find_file($file)) {
+		if (!$this->is_file($file)) {
 			$this->error("Could not find \"$file\"");
 			return false;
 		}
@@ -286,7 +250,10 @@ class dir
 			$this->error("\"$file\" is not writable");
 			return false;
 		}
-		if (@file_put_contents($this->full_path . DIRECTORY_SEPARATOR . $file, $contents)) {
+		if (@file_put_contents($filepath, $contents)) {
+			//Update filesize
+			clearstatcache(true, $filepath);
+			$this->get_file($file)->size = filesize($filepath);
 			return true;
 		}
 		else {
@@ -296,7 +263,7 @@ class dir
 	}
 
 	public function read_file($file) {
-		if (!$this->find_file($file)) {
+		if (!$this->is_file($file)) {
 			$this->error("Could not find \"$file\"");
 			return false;
 		}
@@ -316,7 +283,7 @@ class dir
 	}
 
 	public function new_file($file) {
-		if ($this->find_file($file)) {
+		if ($this->is_file($file)) {
 			$this->error("\"$file\" already exists");
 			return false;
 		}
@@ -391,36 +358,61 @@ class dir
 		return !$errFlag;
 	}
 
-	public function rename_dir($from, $to) {
-		if (!in_array($from, $this->subdirs)) {
-			$this->error("Could not find \"$from\"");
+	public function copy($dirs_files, $to) {
+		if (is_string($dirs_files))
+			$dirs_files = array($dirs_files);
+		if (!is_array($dirs_files) || count($dirs_files) < 1)
+			return false;
+
+		$to_path = $this->sanitize_path($to);
+		if ($to_path === false) {
+			$this->error("Invalid destination path: \"$to\"");
 			return false;
 		}
-		
-		if (!$this->is_valid_filename($to)) {
-			$this->error("Invalid target for directory rename: \"$to\"");
-			return false;
+
+		$no_errors = true;
+		foreach ($dirs_files as $dir_file) {
+			if ($this->is_file($dir_file)) {
+				if(@!copy($this->full_path . DIRECTORY_SEPARATOR . $dir_file, $to_path . DIRECTORY_SEPARATOR . $dir_file)) {
+					$this->error("Could not move \"$dir_file\" to \"$to\"");
+					$no_errors = true;
+				}
+			}
+			else if ($this->is_subdir($dir_file)) {
+				$from_dir = new dir($this->get_chrooted_path() . DIRECTORY_SEPARATOR . $dir_file, $this->chroot_path);
+				if ($from_dir->has_errors()) {
+					$this->error("Invalid path. Partial copy may have occurred");
+					$no_errors = false;
+					continue;
+				}
+				$to_dir = new dir($to, $this->chroot_path);
+				if ($to_dir->has_errors()) {
+					$this->error("Invalid path. Partial copy may have occurred");
+					$no_errors = false;
+					continue;
+				}
+				if (!$to_dir->make_dir($dir_file)) {
+					$this->error("Could not copy \"" . $this->get_chrooted_path() . DIRECTORY_SEPARATOR . "$dir_file\" to " . $to_dir->get_chrooted_path());
+					$no_errors = false;
+					continue;
+				}
+				$from_dir->copy($from_dir->get_file_names(), $to . DIRECTORY_SEPARATOR . $dir_file);
+				$from_dir->copy($from_dir->get_subdirs(), $to . DIRECTORY_SEPARATOR . $dir_file);
+			}
+			else {
+				$this->error("Could not find \"$dir_file\"");
+				$no_errors = false;
+				continue;
+			}
 		}
-		
-		if (@rename($this->full_path . DIRECTORY_SEPARATOR . $from, $this->full_path . DIRECTORY_SEPARATOR . $to)) {
-			$this->refresh();
-			return true;
-		}
-		else {
-			$this->error("Could not rename \"$from\" to \"$to\"");
-			return false;
-		}
+		$this->refresh();
+		return $no_errors;
 	}
 
-	public function copy_dirs($subdirs, $to_dir) {
-		//needs to be run recursively via this class
-		return false;
-	}
-
-	public function move_dirs($subdirs, $to_dir) {
-		if (is_string($subdirs))
-			$subdirs = array($subdirs);
-		if (!is_array($subdirs) || count($subdirs) < 1)
+	public function move($dirs_files, $to_dir) {
+		if (is_string($dirs_files))
+			$dirs_files = array($dirs_files);
+		if (!is_array($dirs_files) || count($dirs_files) < 1)
 			return false;
 
 		$to = $this->sanitize_path($to_dir);
@@ -429,20 +421,25 @@ class dir
 			return false;
 		}
 
-		$flagError = false;
-		foreach ($subdirs as $subdir) {
-			if (!in_array($subdir, $this->subdirs, true)) {
-				$this->error("Could not find \"$subdir\"");
-				$flagError = true;
+		$no_errors = true;
+		foreach ($dirs_files as $dir_file) {
+			if (!$this->is_subdir($dir_file) && !$this->is_file($dir_file)) {
+				$this->error("Could not find \"$dir_file\"");
+				$no_errors = false;
 				continue;
 			}
-			if (@!rename($this->full_path . DIRECTORY_SEPARATOR . $subdir, $to . DIRECTORY_SEPARATOR . $subdir)) {
-				$this->error("Could not move \"$subdir\" to \"$to\"");
-				$flagError = false;
+			else if (is_file($to . DIRECTORY_SEPARATOR . $dir_file) || is_dir($to . DIRECTORY_SEPARATOR . $dir_file)) {
+				$this->error("Could not move \"$dir_file\" to \"$to_dir\" (already exists)");
+				$no_errors = false;
+				continue;
+			}
+			else if (@!rename($this->full_path . DIRECTORY_SEPARATOR . $dir_file, $to . DIRECTORY_SEPARATOR . $dir_file)) {
+				$this->error("Could not move \"$dir_file\" to \"$to_dir\"");
+				$no_errors = true;
 			}
 		}
 		$this->refresh();
-		return !$flagError;
+		return $no_errors;
 	}
 
 	public function kill_dirs($subdirs) {
@@ -496,32 +493,6 @@ class dir
 			return false;
 		}
 		return true;
-	}
-
-	public function load_dir_tree() {
-		$dirout = new StdClass();
-		foreach ($this->get_subdirs() as $subdir_name) {
-			$subdir = new dir($this->get_chrooted_path() . DIRECTORY_SEPARATOR . $subdir_name, $this->chroot_path);
-			if ($subdir->has_errors()) {
-				$this->error("Could not get index of " . $subdir->get_chrooted_path());
-				return false;
-			}
-
-			if (!$subdir->load_dir_tree()) {
-				$this->error("Could not get tree of " . $subdir->get_chrooted_path());
-				return false;
-			}
-			$subdirout = $subdir->get_dir_tree();
-			$dirout->{$subdir_name} = $subdirout;
-		}
-
-		$this->dir_tree = $dirout;
-
-		return true;
-	}
-
-	public function get_dir_tree() {
-		return $this->dir_tree;
 	}
 
 	public function get_errors() {
