@@ -1,20 +1,30 @@
 <?php
 define("PRETTY_HTML", true);
+define("HTML_ERRORS", true);
 use DOMDocumentPlus\DOMDocument as DOMDocument;
 require_once "DOMDocumentPlus.class.php";
 require_once "secure_login_session.class.php";
 class ajax_page {
 	public $DOM, $XPath;
-	private $html, $js, $inline_js, $css, $ajax_callbacks = array();
+	private $html = array();
+	private $js = array();
+	private $inline_js = array();
+	private $css = array();
+	private $ajax_callbacks = array();
 	private $session;
 
-	public function __construct($html_file, string $session = "") {
-		$this->html[] = $html_file;
-		if (!empty($session)) {
-			$this->session = new secure_login_session($session);
+	public function __construct(string $session = "", string $userfile = "") {
+		if (!empty($session) && !empty($userfile)) {
+			try {
+				$this->session = new secure_login_session($session, $userfile);
+			}
+			catch (Exception $e) {
+				echo '{"success": false, "error": "Could not create session: ' . $e->getMessage() . '"}';
+				exit;
+			}
 			$this->ajax_callbacks = array(
-				"login" => array($this, "login"),
-				"logout" => array($this, "logout"),
+				"login"        => array($this, "login"),
+				"logout"       => array($this, "logout"),
 				"is_logged_in" => array($this, "is_logged_in")
 			);
 		}
@@ -67,9 +77,12 @@ class ajax_page {
 		foreach ($this->ajax_callbacks as $request => $callback) {
 			if (isset($_REQUEST[$request]) && is_callable($callback)) {
 				$response_obj = call_user_func($callback);
-				if ($response_obj !== false) {
+				if (is_object($response_obj)) {
 					header('Content-Type: application/json');
 					echo json_encode($response_obj);
+					return;
+				}
+				else if ($response_obj === true) { //No output
 					return;
 				}
 			}
@@ -80,6 +93,10 @@ class ajax_page {
 			echo $this->DOM->savePrettyHTML();
 		else
 			echo $this->DOM->saveHTML();
+
+		if (HTML_ERRORS && count($this->DOM->tidy_errors) > 0) {
+			echo htmlspecialchars(implode("<br>", $this->DOM->tidy_errors));
+		}
 	}
 
 	private function generateHTML() {

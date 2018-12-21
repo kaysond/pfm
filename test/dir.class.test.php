@@ -14,7 +14,7 @@ for ($i = 0; $i < 3; $i++) {
 }
 
 echo "Creating new dir()\n";
-require_once "dir.class.php";
+require_once "../src/dir.class.php";
 $dir = new dir("/", "/var/www/dir_class_test");
 
 echo "Testing sorts\n";
@@ -40,8 +40,8 @@ assert($dir->rename("file0", "file3"));
 assert($dir->get_file_names() == array("file1", "file2", "file3"));
 
 echo "Smart renaming fileX to afileX\n";
-var_dump($dir->smart_rename_test("/file(\d)/", "afile\\1"));
-assert($dir->smart_rename("/file(\d)/", "afile\\1"));
+var_dump($dir->regex_rename_test("/file(\d)/", "afile\\1"));
+assert($dir->regex_rename("/file(\d)/", "afile\\1"));
 assert($dir->get_file_names() == array("afile1", "afile2", "afile3"));
 
 echo "Copying afile1 to subdir0 - without leading slash\n";
@@ -93,9 +93,13 @@ echo "Refreshing and dumping\n";
 assert($dir->refresh());
 var_dump($dir);
 
+echo "Searching"
+//ADD GOOD SEARCH TESTS
+assert($dir->search("dir", 1, false));
+
 function cleanup() {
 	global $dir;
-	print_r($dir);
+	//print_r($dir);
 	if (is_callable(array("dir", "get_errors"))) {
 		echo "Errors:\n";
 		var_dump($dir->get_errors());
@@ -103,3 +107,4 @@ function cleanup() {
 	echo "Cleaning up\n";
 	system("rm -rf " . escapeshellarg(TEST_PATH));
 }
+	

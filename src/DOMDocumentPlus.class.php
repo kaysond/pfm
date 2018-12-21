@@ -1,6 +1,8 @@
 <?php
 namespace DOMDocumentPlus;
 class DOMDocument extends \DOMDocument {
+	public $tidy_errors = array();
+
 	public function loadElement(string $html) {
 		$DOM = new DOMDocument();
 		$DOM->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -14,7 +16,7 @@ class DOMDocument extends \DOMDocument {
                 $tidy->parseString($this->saveHTML(), $params);
                 $tidy->cleanRepair();
                 if (tidy_error_count($tidy) > 0 || tidy_warning_count($tidy) > 0)
-                        trigger_error("Tidy errors/warnings: " . $tidy->errorBuffer, E_USER_WARNING);
+                        $this->tidy_errors = array_merge($this->tidy_errors, explode("\n", $tidy->errorBuffer));
                 return tidy_get_output($tidy);
 	}
 }

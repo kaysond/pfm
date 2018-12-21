@@ -1,17 +1,18 @@
-*implement upload
-*implement move dirs JS/ajax
-*implement copy dirs php/JS/ajax
-*implement drag/drop file upload
-*implement drag/drop copy/move
-*fix #manager css (copy positioning from div.subdirs and put both files and subdirs in there)
-*move select/cancel in dir select to fixed@bottom of div
-*add search
-*don't kill edit on save/close
-*store column selection
-*add proper toasting/errors
-*change confirm()'s and prompt()'s to html
-*add directory separator JS
+*config (users, chroot, base www path, ACL)
+*compile to single file with minifying
+
+*column widths
+*add download/upload abort
+*multiple upload/download
+*duplicate subdirs
 *add invalid characters by OS JS
-*add hotkeys
-*bug with partial rename and no refresh
-*better way to do clear cover?
+*validate upload filenames and size
+*validate all renames on front end
+*validate full copies and moves on back end
+*implement drag/drop copy/move
+*implement drag/drop file upload
+*improve file class for windows
+*combine dir/file copies/moves, etc into one function
+*fix vertical alignment issues between text input and buttons
+*remove `` ? (aka old IE compatibility)
+*automate testing

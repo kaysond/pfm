@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>PHP File Manager</title>
+	<title>File Manager</title>
 </head>
 
 <body>
@@ -12,15 +12,18 @@
 	<div class="menu">
 		<ul class="ribbon">
 			<li class="subdirs">Subdirectories</li>
-			<li class="files-menu">Files</li>
-		</ul>		
-		<input type="text" id="path"> <input type="submit" value="Go" id="go">
+			<li class="files">Files</li>
+			<li class="search">Search</li>
+		</ul>
+		<form id="path-form">		
+			<input type="text" id="path" size="15">
+		</form>
 	</div>
-	<div class="title">PHP File Manager</div>
+	<div class="title">File Manager</div>
 	<div class="logout"><a id="logout" href="#">Logout</a></div>
 </div>
 
-<div class="ribbon subdirs">
+<div id="subdirs-menu">
 	<form id="subdirs-form">
 		<input type="hidden" id="subdirs-action">
 		<input type="submit" value="Up">
@@ -30,11 +33,12 @@
 		<input type="submit" value="Move">
 		<input type="submit" value="Delete">
 		<input type="submit" value="Kill">
+		<input type="submit" value="Download">
 		<input type="submit" value="Select All">
 	</form>
 </div>
 
-<div class="ribbon files-menu">
+<div id="files-menu">
 	<form id="files-form">
 		<input type="hidden" id="files-action">
 		<input type="submit" value="New">
@@ -42,9 +46,11 @@
 		<input type="submit" value="Regex Rename">
 		<input type="submit" value="Move">
 		<input type="submit" value="Copy">
+		<input type="submit" value="Duplicate">
 		<input type="submit" value="Delete">
 		<input type="submit" value="Edit">
 		<input type="submit" value="Upload">
+		<input type="submit" value="Download">
 	</form>
 </div>
 
@@ -52,17 +58,34 @@
 	<form id="regex-rename-form">
 		<label for="pattern">Pattern </label><input type="text" id="pattern">
 		<label for="replace">Replace </label><input type="text" id="replace">
-		<input id="regex-rename" type="submit" value="Regex Rename">
-		<input id="regex-rename-confirm" type="button" value="Confirm">
-		<input id="regex-rename-clear" type="button" value="Clear">
+		<input type="submit" class="rename" value="Regex Rename">
+		<input type="submit" class="confirm" value="Confirm">
+		<input id="regex-rename-clear" class="confirm" type="button" value="Clear">
 	</form>
 </div>
 
-<div class="header-dummy">PHP File Manager</div>
+<div id="search-menu" class="ribbon search">
+	<label for="filter">Filter </label><input type="text" id="filter">
+	<form id="search-form">
+		<label for="search-query">Advanced Search </label><input type="text" id="search-query">
+		<label for="search-depth">Depth </label><input type="text" id="search-depth" class="setting" size="1" value="1">
+		<label for="search-regex">Regex </label><input type="checkbox" id="search-regex" class="setting">
+		<input type="submit" value="Search">
+	</form>
+</div>
+
+<div class="ribbon upload">
+	<form id="upload-form">
+		<input type="hidden" id="max-file-size" name="MAX_FILE_SIZE">
+		<input type="file" id="upload" name="upload[]" multiple>
+		<input type="submit" value="Upload">
+	</form>
+</div>
 
 <div id="login" class="container">
 	<div class="row">
 		<div class="twelve columns">
+			<h1>File Manager</h1>
 			<div id="login-errors" class="errors"></div>
 			<form id="login-form">
 					<input type="password" id="password">
@@ -72,35 +95,70 @@
 	</div>
 </div>
 
-<div id="dir-errors" class="errors"></div>
+<div id="error" class="toast errors"></div>
+<div id="toast" class="toast"></div>
+
 <div id="manager">
-	<div class="subdirs">
-		<table class="subdirs">
-			<tbody id="subdirs"></tbody>
-		</table>
+	<div class="scroll subdirs">
+		<div>
+			<table class="subdirs">
+				<thead><tr><th>Subdirectories</th></tr></thead>
+				<tbody id="subdirs"></tbody>
+			</table>
+		</div>
 	</div>
-	<div class="files">
-		<table class="files">
-			<thead class="files">
-				<tr>
-					<th width="1"><input type="checkbox" id="check-all"></th>
-					<th id="file-name" class="files col-name">Name</th>
-					<th id="file-size" class="files col-size">Size</th>
-					<th id="file-owner" class="files col-owner">Owner</th>
-					<th id="file-group" class="files col-group">Group</th>
-					<th id="file-perms" class="files col-perms">Permissions</th>
-					<th id="file-created" class="files col-created">Created</th>
-					<th id="file-modified" class="files col-modified">Modified</th>
-				</tr>
-			</thead>
-			<tbody id="files"></tbody>
-		</table>
+	<div class="scroll files">
+		<div>
+			<table class="files">
+				<thead class="files">
+					<tr>
+						<th width="1"><input type="checkbox" id="check-all"></th>
+						<th id="file-name" class="files col-name">Name</th>
+						<th id="file-size" class="files col-size">Size</th>
+						<th id="file-owner" class="files col-owner">Owner</th>
+						<th id="file-group" class="files col-group">Group</th>
+						<th id="file-perms" class="files col-perms">Permissions</th>
+						<th id="file-created" class="files col-created">Created</th>
+						<th id="file-modified" class="files col-modified">Modified</th>
+					</tr>
+				</thead>
+				<tbody id="files"></tbody>
+			</table>
+		</div>
 	</div>
 </div>
 
-<div id="dir-select">
-	<ul class="dir-select"></ul>
-	<input type="button" value="Select" id="dir-select-select"> <input type="submit" value="Cancel" id="dir-select-cancel">
+<div id="progress-wrapper">
+	<div id="ul-progress">
+		<label>Uploading... </label><div class="progress"><span id="ul-progress-text" class="progress-text">&nbsp;</span><div id="ul-progress-bar" class="progress-bar">&nbsp;</div></div>
+	</div>
+	<div id="dl-progress">
+		<label>Downloading... </label><div class="progress"><span id="dl-progress-text" class="progress-text">&nbsp;</span><div id="dl-progress-bar" class="progress-bar">&nbsp;</div></div>
+	</div>
+</div>
+
+<div class="modal dir-select">
+	<div class="modal-list">
+		<table summary="Directory selection">
+			<thead><tr><th></th></tr></thead>
+			<tbody id="dir-select"></tbody>
+		</table>
+	</div>
+	<div class="modal-buttons">
+		<input type="button" value="Select" id="dir-select-select"> <input type="submit" value="Cancel" id="dir-select-cancel">
+	</div>
+</div>
+
+<div class="modal search-results">
+	<div class="modal-list">
+		<table summary="Search results">
+			<thead><tr><th>Search Results</th><th></th></tr></thead>
+			<tbody id="search-results"></tbody>
+		</table>
+	</div>
+	<div id="search-results-buttons" class="modal-buttons">
+		<input type="button" value="Close" id="search-results-close">
+	</div>
 </div>
 
 <div id="edit-box">
@@ -112,17 +170,15 @@
 	</form>
 </div>
 
-<div id="column-context">
-	<label><input type="checkbox" class="column-sel" id="chkbx-name" checked> Name</label>
-	<label><input type="checkbox" class="column-sel" id="chkbx-size" checked> Size</label>
-	<label><input type="checkbox" class="column-sel" id="chkbx-owner" checked> Owner</label>
-	<label><input type="checkbox" class="column-sel" id="chkbx-group" checked> Group</label>
-	<label><input type="checkbox" class="column-sel" id="chkbx-perms" checked> Permissions</label>
-	<label><input type="checkbox" class="column-sel" id="chkbx-created" checked> Created</label>
-	<label><input type="checkbox" class="column-sel" id="chkbx-modified" checked> Modified</label>
+<div id="filecolumns-menu" class="contextmenu">
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-name" checked> Name</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-size" checked> Size</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-owner" checked> Owner</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-group" checked> Group</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-perms" checked> Permissions</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-created" checked> Created</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-modified" checked> Modified</label>
 </div>
-
-<div id="clear-cover"></div>
 
 </body>
 </html>
