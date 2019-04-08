@@ -1,4 +1,5 @@
 <?php
+namespace dir;
 define("DIRSEP", DIRECTORY_SEPARATOR);
 class dir {
 	public $invalid_chars = "";
@@ -306,7 +307,7 @@ class dir {
 			$this->error("\"$file\" is not readable");
 			return false;
 		}
-		if (!@readfile($filepath)) {
+		if (@readfile($filepath) === false) {
 			$this->error("Could not open \"$file\"");
 			return false;
 		}

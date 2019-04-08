@@ -1,5 +1,6 @@
 <?php
 namespace DOMDocumentPlus;
+
 class DOMDocument extends \DOMDocument {
 	public $tidy_errors = array();
 

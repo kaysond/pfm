@@ -1,8 +1,9 @@
 <?php
+namespace secure_login_session;
 //These constants may be changed without breaking existing hashes.
 define("PBKDF2_HASH_ALGORITHM", "sha256");
 define("PBKDF2_ITERATIONS", 1000);
-define("PBKDF2_SALT_BYTE_SIZE", 24);
+define("PBKDF2_SALT_BYTE_SIZE", 24);	
 define("PBKDF2_HASH_BYTE_SIZE", 24);
 
 define("HASH_SECTIONS", 4);
@@ -16,12 +17,12 @@ define("DISABLE_IP_CHECK", false);
 
 class secure_login_session {
 
-	function __construct($session_name, $userfile) {
+	function __construct($session_name, $users) {
 		if (session_status() == PHP_SESSION_ACTIVE) {
 			throw new Exception("Session already active");
 		}
 
-		$this->userfile = $userfile;
+		$this->users = json_decode($users, true);
 
 		//Hash algorithm to use for the session ID
 		$session_hash = 'sha256';
@@ -89,28 +90,23 @@ class secure_login_session {
 	}
 
 	public function login($user, $password) {
-		$users = json_decode(file_get_contents($this->userfile), true);
-		if ($users !== NULL && array_key_exists($user, $users)) {
-			if ($this->validate_password($password, $users[$user]["login_hash"])) {
+		if ($this->users !== NULL && array_key_exists($user, $this->users)) {
+			if ($this->validate_password($password, $this->users[$user]["login_hash"])) {
 				$_SESSION["user"] = $user;
-				$session_hash = $users[$user]["login_hash"] . $_SERVER["HTTP_USER_AGENT"];
+				$session_hash = $this->users[$user]["login_hash"] . $_SERVER["HTTP_USER_AGENT"];
 				if (!DISABLE_IP_CHECK)
 					$session_hash .= $_SERVER["REMOTE_ADDR"];
 
 				$_SESSION["hash"] = $this->create_hash($session_hash);
-				$users[$user]["brute_force"] = 0;
-				if (file_put_contents($this->userfile, json_encode($users)) )
-					return true;
-				else
-					return false;
+				$this->users[$user]["brute_force"] = 0;
+				return true;
 			}
 			else {
-				$users[$user]["brute_force"]++;
-				if ($users[$user]["brute_force"] >= FAILED_ATTEMPTS) {
-					$users[$user . "||LOCKED"] = $users[$user];
-					unset($users[$user]);
+				$this->users[$user]["brute_force"]++;
+				if ($this->users[$user]["brute_force"] >= FAILED_ATTEMPTS) {
+					$this->users[$user . "||LOCKED"] = $this->users[$user];
+					unset($this->users[$user]);
 				}
-				file_put_contents($this->userfile, json_encode($users));
 				return false;
 			}
 		}
@@ -136,9 +132,8 @@ class secure_login_session {
 	public function is_valid() {
 		if (!isset($_SESSION["user"]) || !isset($_SESSION["hash"]) )
 			return false;
-		$users = json_decode(file_get_contents($this->userfile), true);
-		if ($users !== NULL && array_key_exists($_SESSION["user"], $users)) {
-			$session_hash = $users[$_SESSION["user"]]["login_hash"] . $_SERVER["HTTP_USER_AGENT"];
+		if ($this->users !== NULL && array_key_exists($_SESSION["user"], $this->users)) {
+			$session_hash = $this->users[$_SESSION["user"]]["login_hash"] . $_SERVER["HTTP_USER_AGENT"];
 			if (!DISABLE_IP_CHECK)
 				$session_hash .= $_SERVER["REMOTE_ADDR"];
 			if ($this->validate_password($session_hash, $_SESSION["hash"] ) ) 
@@ -151,14 +146,17 @@ class secure_login_session {
 	}
 
 	public function add_user($user, $password) {
-		$users = json_decode(file_get_contents($this->userfile), true) ;
-		if ($users !== NULL && !array_key_exists($user, $users)) {
-			$users[$user] = array("login_hash" => $this->create_hash($password), "brute_force" => 0);
-			if (file_put_contents($this->userfile, json_encode($users)) )
-				return true;
-			else
-				return false;
+		if ($this->users !== NULL && !array_key_exists($user, $this->users)) {
+			$this->users[$user] = array("login_hash" => $this->create_hash($password), "brute_force" => 0);
+			return true;
 		}
+		else
+			return false;
+	}
+
+	public function dump_user_file($file) {
+		if (file_put_contents($file, json_encode($this->users)))
+			return true;
 		else
 			return false;
 	}
@@ -263,5 +261,4 @@ class secure_login_session {
 
 
 }
-
 ?>
