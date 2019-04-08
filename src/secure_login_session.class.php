@@ -99,7 +99,7 @@ class secure_login_session {
 
 				$_SESSION["hash"] = $this->create_hash($session_hash);
 				$this->users[$user]["brute_force"] = 0;
-				return true;
+				return true;	
 			}
 			else {
 				$this->users[$user]["brute_force"]++;
