@@ -223,6 +223,9 @@ CB
 		}
 		if (PRETTY_HTML)
 			$output .= $this->DOM->savePrettyHTML();
+		elseif (MINIFY_HTML) {
+			$output .= str_replace(PHP_EOL, '', preg_replace('/(?:^\s+|\s$)/m', '', $this->DOM->saveHTML()));
+		}
 		else
 			$output .= $this->DOM->saveHTML();
 
