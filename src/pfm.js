@@ -118,7 +118,7 @@ var dir = {
 			var perms = $("<td class='col-permissions'>").text(dir.formatPerms(file.permissions))
 			var created = $("<td class='col-created'>").text(dir.formatDate(file.created))
 			var modified = $("<td class='col-modified'>").text(dir.formatDate(file.modified))
-			var row = $("<tr class='file'>").append(checkbox).append(name).append(size).append(owner).append(group).append(perms).append(created).append(modified)
+			var row = $("<tr class='file' draggable='true'>").append(checkbox).append(name).append(size).append(owner).append(group).append(perms).append(created).append(modified)
 			$("#files").append(row)
 		}.bind(this))
 		$("th.files").removeClass("sortAsc sort_desc")
@@ -339,7 +339,7 @@ var dir = {
 			}
 		}
 
-		return this.execute("move", {"names[]": names, to: to}, `Moved ${names.length} file` + (names.length > 1 ? "s" : "") + `to ${to}`)
+		return this.execute("move", {"names[]": names, to: to}, `Moved ${names.length} file` + (names.length > 1 ? "s" : "") + ` to ${to}`)
 	},
 	copyFiles: function(names, to) {
 		if (names.length < 1)
