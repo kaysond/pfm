@@ -100,7 +100,7 @@ var dir = {
 
 		$("#subdirs").empty()
 		if (this.path != dir.separator)
-			$("#subdirs").append($("<tr class='subdir'><td class='subdir'>..</td></tr>"))
+			$("#subdirs").append($("<tr class='subdir'><td class='subdir'>.."))
 		this.subdirs.forEach(function(subdir) {
 			$("#subdirs").append($("<tr class='subdir'>").append($("<td class='subdir'>").text(subdir).attr("title", subdir)))
 		})
@@ -111,7 +111,7 @@ var dir = {
 		var file_path = this.path == dir.separator ? "" : this.path
 		this.files.forEach(function(file) {
 			var checkbox = $("<td class='col-checked'>").append($(`<input class="files" type="checkbox" value="${file.name}">`))
-			var name = $("<td class='col-name'>").append($(`<a href="${this.baseURLPath}${file_path}/${file.name}" target="_BLANK" title="${file.name}">${file.name}</a>`))
+			var name = $("<td class='col-name'>").append($(`<a href="${this.baseURLPath}${file_path}/${file.name}" target="_BLANK" title="${file.name}">${file.name}`))
 			var size = $("<td class='col-size'>").text(dir.formatSize(file.size))
 			var owner = $("<td class='col-owner'>").text(file.owner)
 			var group = $("<td class='col-group'>").text(file.group)
@@ -394,12 +394,12 @@ var dir = {
 			}
 			$("#search-results").empty()
 			data.results.forEach(function(result) {
-				var a = $("<a href='" + this.baseURLPath + result + "' target='_BLANK' title='" + this.baseURLPath + result + "'>" + result + "</a>")
+				var a = $("<a href='" + this.baseURLPath + result + "' target='_BLANK' title='" + this.baseURLPath + result + "'>" + result + "")
 				var pieces = result.split(dir.separator)
 				var path = pieces.slice(0, -1).join(dir.separator)
 				var file = pieces.reverse()[0]
 				var onclick = "window.dir.refresh('" + path + "').done(function() { window.dir.selectFile('" + file + "'); window.dir.resetUI()})" 
-				var a2 = $("<a onclick=\"" + onclick + "\" class='jumpto'>Jump to</a>")
+				var a2 = $("<a onclick=\"" + onclick + "\" class='jumpto'>Jump to")
 				$("#search-results").append($("<tr>").append($("<td>").append(a)).append($("<td>").append(a2)))
 			}.bind(this))
 			$("div.modal.search-results").show()
@@ -657,7 +657,7 @@ var dir = {
 		renames.forEach(function(rename) {
 			$(`td.col-name`).filter(function() { 
 				return $(this).text() === rename.from
-			}).append($(`<span><br />&emsp;&#x27A5; ${rename.to}</span>`))
+			}).append($(`<span><br />&emsp;&#x27A5; ${rename.to}`))
 		})
 	},
 	clearRegexRenames: function() {

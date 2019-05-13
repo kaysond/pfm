@@ -1,13 +1,25 @@
 <?php
+//localize CSS files
+//credit minifiers
 if (!defined('PRETTY_HTML')) define("PRETTY_HTML", false);
 if (!defined('MINIFY_HTML')) define("MINIFY_HTML", true);
 if (!defined('MINIFY_JS')) define("MINIFY_JS", true);
 if (!defined('LOCALIZE_JS')) define("LOCALIZE_JS", true);
 if (!defined('MINIFY_CSS')) define("MINIFY_CSS", true);
 if (!defined('LOCALIZE_CSS')) define("LOCALIZE_CSS", true);
-if (!defined('HTML_ERRORS')) define("HTML_ERRORS", true);
+if (!defined('HTML_ERRORS')) define("HTML_ERRORS", false);
 require_once('DOMDocumentPlus.class.php');
-use DOMDocumentPlus\DOMDocument as DOMDocument;
+require_once('minify/JShrink/Minifier.php');
+require_once('minify/JS/JShrink.php');
+require_once('minify/JS/ClosureCompiler.php');
+require_once('minify/CSS/UriRewriter.php');
+require_once('minify/CSSmin.php');
+require_once('minify/CSSmin/Utils.php');
+require_once('minify/CSSmin/Command.php');
+require_once('minify/CSSmin/Colors.php');
+require_once('minify/CSSmin/Minifier.php');
+require_once('minify/HTML.php');
+use DOMDocumentPlus\DOMDocument;
 class ajax_page {
 	public $DOM, $XPath;
 	private $html = array();
@@ -25,7 +37,7 @@ class ajax_page {
 		if (!empty($session_name) && !empty($users)) {
 			$this->session_name = $session_name;
 			$this->users = $users;
-			$this->include('secure_login_session.class.php', 'secure_login_session\secure_login_session');
+			$this->include('secure_login_session.class.php');
 			$this->callbacks_map = ['login' => 'login', 'logout' => 'logout', 'is_logged_in' => 'is_logged_in'];
 			$this->callbacks = <<<'CB'
 function login() { global $ajax_page_session; if (!isset($_REQUEST["username"]) || !isset($_REQUEST["password"])) return (object) ["success" => false, "error" => "Request did not include username and password"]; if ($ajax_page_session->login($_REQUEST["username"], $_REQUEST["password"])) return (object) ["success" => true]; else return (object) ["success" => false, "error" => "Invalid username or password"]; } function logout() { global $ajax_page_session; if ($ajax_page_session) { $ajax_page_session->logout(); return (object) ['success' => true]; } else { return (object) ['success' => false, 'error' => 'Could not find session']; } } function is_logged_in() { global $ajax_page_session; return (object) ['success' => $ajax_page_session && $ajax_page_session->is_valid()]; }
@@ -119,15 +131,7 @@ CB;
 			}
 		}
 
-		$this->generateHTML();
-		if (PRETTY_HTML)
-			echo $this->DOM->savePrettyHTML();
-		else
-			echo $this->DOM->saveHTML();
-
-		if (HTML_ERRORS && count($this->DOM->tidy_errors) > 0) {
-			echo htmlspecialchars(implode('<br>', $this->DOM->tidy_errors));
-		}
+		echo $this->generateHTML();
 	}
 
 	public function compile(string $file) {
@@ -198,8 +202,10 @@ CB
 	}
 
 	private function generateHTML() {
-		$this->DOM = new DOMDocument();
+		$output = '';
+		//Load HTML
 		$html = '';
+		$this->DOM = new DOMDocument();
 		foreach($this->html as $html_file) {
 				$html .= file_get_contents($html_file);
 		}
@@ -207,27 +213,57 @@ CB
 
 		//Add JS
 		foreach ($this->js as $js_file) {
-				$element = $this->DOM->loadElement("<script type='text/javascript' src='$js_file'>");
-				$this->DOM->getElementsByTagName("head")->item(0)->appendChild($element);
+			if (MINIFY_JS) {
+				$node = $this->DOM->createElement('script');
+				$text = $this->DOM->createTextNode(Minify_JS_ClosureCompiler::minify(file_get_contents($js_file), array('maxBytes' => 500000)));
+				$node->appendChild($text);
+
+			}
+			elseif (LOCALIZE_JS) {
+				$node = $this->DOM->createElement('script');
+				$text = $this->DOM->createTextNode(file_get_contents($js_file));
+				$node->appendChild($text);
+			}
+			else {
+				$node = $this->DOM->createElement('script');
+				$node->setAttribute('src', "$js_file");
+			}
+			$this->DOM->getElementsByTagName("head")->item(0)->appendChild($node);
 		}
 
 		//Add CSS
 		foreach ($this->css as $css_file) {
-				$element = $this->DOM->loadElement("<link rel='stylesheet' type='text/css' href='$css_file'>");
-				$this->DOM->getElementsByTagName("head")->item(0)->appendChild($element);
+			if (MINIFY_CSS) {
+				$tag = '<style>' .
+					Minify_CSSmin::minify(file_get_contents($css_file)) .
+					'</style>';
+			}
+			elseif (LOCALIZE_CSS) {
+				$tag = '<style>' .
+				file_get_contents($css_file) .
+				'</style>';
+			}
+			else {
+				$tag = "<link rel='stylesheet' type='text/css' href='$css_file'>";
+			}
+
+			$element = $this->DOM->loadElement($tag);
+			$this->DOM->getElementsByTagName("head")->item(0)->appendChild($element);
 		}
 
-		$output = '';
 		if (HTML_ERRORS && count($this->DOM->tidy_errors) > 0) {
-			$output .= htmlspecialchars(implode('<br>', $this->DOM->tidy_errors)) . $output;
+			$output .= htmlspecialchars(implode('<br>', $this->DOM->tidy_errors));
 		}
-		if (PRETTY_HTML)
+
+		if (PRETTY_HTML) {
 			$output .= $this->DOM->savePrettyHTML();
-		elseif (MINIFY_HTML) {
-			$output .= str_replace(PHP_EOL, '', preg_replace('/(?:^\s+|\s$)/m', '', $this->DOM->saveHTML()));
 		}
-		else
+		elseif (MINIFY_HTML) {
+			$output .= MINIFY_HTML::minify($this->DOM->saveHTML());
+		}
+		else {
 			$output .= $this->DOM->saveHTML();
+		}
 
 		return $output;
 	}

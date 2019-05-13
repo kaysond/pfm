@@ -11,8 +11,6 @@
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
 	
-* minification
-
 * handle response format errors on login
 * column widths
 * add download/upload abort

@@ -6,6 +6,7 @@ class DOMDocument extends \DOMDocument {
 
 	public function loadElement(string $html) {
 		$DOM = new DOMDocument();
+		libxml_use_internal_errors(true);
 		$DOM->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
 		return $this->importNode($DOM->documentElement, true);
 	}
