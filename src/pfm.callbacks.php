@@ -364,7 +364,6 @@ function copy_pfm() {
 }
 
 function upload() {
-	return (object) ["success" => false, "error" => "Uploads not permitted"];
 	try {
 		$dir = load_dir([]);
 	}

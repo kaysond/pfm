@@ -118,11 +118,11 @@ var dir = {
 			var perms = $("<td class='col-permissions'>").text(dir.formatPerms(file.permissions))
 			var created = $("<td class='col-created'>").text(dir.formatDate(file.created))
 			var modified = $("<td class='col-modified'>").text(dir.formatDate(file.modified))
-			var row = $("<tr class='file' draggable='true'>").append(checkbox).append(name).append(size).append(owner).append(group).append(perms).append(created).append(modified)
+			var row = $("<tr class='file'>").append(checkbox).append(name).append(size).append(owner).append(group).append(perms).append(created).append(modified)
 			$("#files").append(row)
 		}.bind(this))
-		$("th.files").removeClass("sortAsc sort_desc")
-		$("th.files:contains('" + this.sort.substr(1) + "')").addClass(dir.sortAsc ? "sortAsc" : "sort_desc")
+		$("th.files").removeClass("sort_asc sort_desc")
+		$("th.files:contains('" + this.sort.substr(1) + "')").addClass(dir.sortAsc ? "sort_asc" : "sort_desc")
 		this.toggleColumns()
 	},
 	sortFiles: function(by, asc) {
@@ -1168,7 +1168,6 @@ $(function() {
 		dir.update()
 	})
 
-
 	$("#dir-select-select").click(function(e) {
 		if (dir.dirSelectType == "file") {
 			if ($("#files-action").val() == "copy")
@@ -1350,6 +1349,9 @@ $(function() {
 			var plural = dir.maxUploadCount > 1 ? "s" : ""
 			dir.error("Server will not accept more than " + dir.maxUploadCount + " file" + plural + " per upload")
 		}
+		else if ($("#upload")[0].files.length == 0) {
+			dir.error("No files selected for upload")
+		}
 		else {
 			$("div.ribbon.upload").hide()
 			$("div.ribbon.upload-progress").show()
@@ -1358,6 +1360,19 @@ $(function() {
 		}
 		e.preventDefault()
 	})
+
+	$('html').on('dragover', function(e) {
+		e.stopPropagation();
+		e.preventDefault();
+	})
+
+	$('html').on('drop', function(e) {
+		e.stopPropagation();
+		e.preventDefault();
+
+		$("#upload")[0].files = e.originalEvent.dataTransfer.files;
+		$("#upload-form").submit()
+    });
 
 	$(window).bind("popstate", function(e) {
 		dir.clearErrors()
