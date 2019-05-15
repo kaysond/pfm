@@ -11,16 +11,18 @@
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
 	
-* implement drag/drop copy/move
-* implement drag/drop file upload
+* add subdirectory->go
+* check existing subdirs for new subdir
 * improve search UX
+* make menu more obvious
 * handle response format errors on login
 * column widths
-
-* add download/upload abort
-* multiple upload/download
+* upload complete message should tell which dir
 * duplicate subdirs
 
+* add download/upload abort
+* upload/download queues
+* implement drag/drop copy/move
 * add invalid characters by OS JS
 * validate upload filenames and size
 * validate all renames on front end
@@ -28,5 +30,5 @@
 * improve file class for windows
 * combine dir/file copies/moves, etc into one function
 * fix vertical alignment issues between text input and buttons
-* remove `` ? (aka old IE compatibility)
+* remove ` ` ? (aka old IE compatibility)
 * automate testing

@@ -27,6 +27,7 @@ table, input {
 	align-items: center;
 	height: 5rem;
 	z-index: 10;
+	box-sizing: content-box; /* allows the nav hover to not overlap */
 }
 
 #header > div {
@@ -67,8 +68,6 @@ ul.ribbon > li {
 	display: inline-block;
 	padding: 1rem;
 	border-left: 1px solid black;
-	height: 5rem;
-	line-height: 3rem;
 	margin: 0;
 	font-size: small;
 }
@@ -77,7 +76,7 @@ ul.ribbon > li:last-child {
 	border-right: 1px solid black;
 }
 
-ul.ribbon :hover, ul.ribbon li.selected {
+ul.ribbon > li:hover, ul.ribbon > li.selected {
 	background: #E1E1E1;
 	border-bottom: 1px solid black;
 }
@@ -88,6 +87,7 @@ div.ribbon {
 	left: 0;
 	top: 5rem;
 	background: white;
+	border-top: 1px solid black;
 	border-bottom: 1px solid black;
 	border-right: 1px solid black;
 	padding: 1rem;
@@ -415,16 +415,4 @@ div.progress-bar {
 span.progress-text {
 	position: relative;
 	z-index: 10;
-}
-
-div.ribbon {
-	display: none;
-	position: absolute;
-	left: 0;
-	top: 5rem;
-	background: white;
-	border-bottom: 1px solid black;
-	border-right: 1px solid black;
-	padding: 1rem;
-	z-index: 15;
 }
