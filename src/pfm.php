@@ -1,14 +1,8 @@
 <?php
-// define('MINIFY_CSS', true);
-// define('MINIFY_JS', true);
-// define('MINIFY_HTML', true);
+define('MINIFY_CSS', true);
+define('MINIFY_JS', true);
+define('MINIFY_HTML', true);
 
-define('MINIFY_JS', false);
-define('MINIFY_HTML', false);
-define('MINIFY_CSS', false);
-define('LOCALIZE_JS', false);
-define('LOCALIZE_HTML', false);
-define('LOCALIZE_CSS', false);
 require_once 'ajax_page.class.php';
 $page = new ajax_page('SESSION_NAME', 'AUTH_METHOD');
 $page->set_header('pfm.header.php');

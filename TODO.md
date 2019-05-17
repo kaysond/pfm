@@ -11,17 +11,21 @@
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
 	
-* add subdirectory->go
-* check existing subdirs for new subdir
-* improve search UX
-* make menu more obvious
+* change delete hotkey to del key
+* context menus should appear on entire section not just rows
+* add directories icon (s?)
+* fix search ribbon ui
+* fix address bar span text 1px too low
+* fix address bar span text overflow
+* fix go arrow button not working due to input onblur
+* context menu shouldnt extend below window
 * handle response format errors on login
 * column widths
-* upload complete message should tell which dir
-* duplicate subdirs
+* credit minifiers, jquery, normalize, skeleton
 
 * add download/upload abort
-* upload/download queues
+* duplicate subdirs
+* multiple upload/download
 * implement drag/drop copy/move
 * add invalid characters by OS JS
 * validate upload filenames and size

@@ -1,6 +1,4 @@
 <?php
-//localize CSS files
-//credit minifiers
 if (!defined('PRETTY_HTML')) define("PRETTY_HTML", false);
 if (!defined('MINIFY_HTML')) define("MINIFY_HTML", true);
 if (!defined('MINIFY_JS')) define("MINIFY_JS", true);
@@ -114,7 +112,7 @@ CB;
 		}
 		if (!empty($this->session_name) && !empty($this->users)) {
 			global $ajax_page_session;
-			$ajax_page_session = new secure_login_session($this->session_name, $this->users);
+			$ajax_page_session = new secure_login_session\secure_login_session($this->session_name, $this->users);
 		}
 		eval($this->callbacks);
 		foreach ($this->callbacks_map as $request => $callback) {
@@ -267,5 +265,5 @@ CB
 
 		return $output;
 	}
-}
+}CacheEnable  disk  /
 ?>

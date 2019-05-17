@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>File Manager</title>
+	<title>PFM File Manager</title>
 </head>
 
 <body>
@@ -11,21 +11,28 @@
 <div id="header">
 	<div class="menu">
 		<ul class="ribbon">
-			<li class="subdirs">Subdirectories</li>
-			<li class="files">Files</li>
+			<li class="files">File</li>
+			<li class="subdirs">Directory</li>
 			<li class="search">Search</li>
 		</ul>
-		<form id="path-form">		
-			<input type="text" id="path" size="15">
-		</form>
 	</div>
-	<div class="title">File Manager</div>
+	<div class="title">PFM File Manager</div>
 	<div class="logout"><a id="logout" href="#">Logout</a></div>
+</div>
+<div id="subheader">
+	<div id="addressbar">
+		<span id="up" class="nav">🡩</span>
+		<span class="path"></span>
+		<input type="text" class="path">
+		<span id="go" class="nav">🡪</span>
+	</div>
+	<input type="text" id="filter" placeholder="Filter ⌕">
 </div>
 
 <div id="subdirs-menu">
-	<form id="subdirs-form">
+	<form id="subdirs-form" class="ribbon">
 		<input type="hidden" id="subdirs-action">
+		<input type="submit" value="Go">
 		<input type="submit" value="Up">
 		<input type="submit" value="New">
 		<input type="submit" value="Rename">
@@ -38,7 +45,7 @@
 	</form>
 </div>
 
-<div id="files-menu">
+<div id="files-menu" class="ribbon">
 	<form id="files-form">
 		<input type="hidden" id="files-action">
 		<input type="submit" value="New">
@@ -65,11 +72,10 @@
 </div>
 
 <div id="search-menu" class="ribbon search">
-	<label for="filter">Filter </label><input type="text" id="filter">
 	<form id="search-form">
-		<label for="search-query">Advanced Search </label><input type="text" id="search-query">
-		<label for="search-depth">Depth </label><input type="text" id="search-depth" class="setting" size="1" value="1">
+		<label for="search-query">Query </label><input type="text" id="search-query">
 		<label for="search-regex">Regex </label><input type="checkbox" id="search-regex" class="setting">
+		<label for="search-depth">Depth </label><input type="text" id="search-depth" class="setting" size="1" value="1">
 		<input type="submit" value="Search">
 	</form>
 </div>
@@ -102,7 +108,10 @@
 	<div class="scroll subdirs">
 		<div>
 			<table class="subdirs">
-				<thead><tr><th>Subdirectories</th></tr></thead>
+				<thead><tr><th class="subdir">
+<!--<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 0 0">
+<path d="M857 118v393q0 22-15 38t-38 15h-393q-23 0-38 16t-16 38v36q0 22-15 38t-38 15h-179q-22 0-38-15t-16-38v-536q0-22 16-38t38-16h679q22 0 38 16t15 38z m72 393v-393q0-51-37-88t-88-37h-679q-51 0-88 37t-37 88v536q0 51 37 88t88 37h179q51 0 88-37t37-88v-18h375q51 0 88-37t37-88z" horiz-adv-x="928.6" />
+</svg>-->&#x200B;</th></tr></thead>
 				<tbody id="subdirs"></tbody>
 			</table>
 		</div>
@@ -117,7 +126,7 @@
 						<th id="file-size" class="files col-size">Size</th>
 						<th id="file-owner" class="files col-owner">Owner</th>
 						<th id="file-group" class="files col-group">Group</th>
-						<th id="file-perms" class="files col-perms">Permissions</th>
+						<th id="file-permissions" class="files col-permissions">Permissions</th>
 						<th id="file-created" class="files col-created">Created</th>
 						<th id="file-modified" class="files col-modified">Modified</th>
 					</tr>
@@ -175,7 +184,7 @@
 	<label><input type="checkbox" class="column-sel setting" id="chkbx-size" checked> Size</label>
 	<label><input type="checkbox" class="column-sel setting" id="chkbx-owner" checked> Owner</label>
 	<label><input type="checkbox" class="column-sel setting" id="chkbx-group" checked> Group</label>
-	<label><input type="checkbox" class="column-sel setting" id="chkbx-perms" checked> Permissions</label>
+	<label><input type="checkbox" class="column-sel setting" id="chkbx-permissions" checked> Permissions</label>
 	<label><input type="checkbox" class="column-sel setting" id="chkbx-created" checked> Created</label>
 	<label><input type="checkbox" class="column-sel setting" id="chkbx-modified" checked> Modified</label>
 </div>

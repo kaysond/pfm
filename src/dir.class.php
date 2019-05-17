@@ -340,7 +340,7 @@ class dir {
 			return false;
 		}
 		$zip = new \ZipArchive();
-		if ($zip->open($output, ZipArchive::OVERWRITE) === false) {
+		if ($zip->open($output, \ZipArchive::OVERWRITE) === false) {
 			$this->error("Could not create zip file");
 			return false;
 		}

@@ -29,7 +29,7 @@ var dir = {
 				$("#files-form input[value='Delete']").click()
 		},
 		"ctrl+shift+f": function() {
-			$("li.search").click()
+			$("#filter").focus()
 		},
 		"ctrl+shift+k": function() {
 			$("#subdirs-form input[value='Kill']").click()
@@ -46,6 +46,9 @@ var dir = {
 		},
 		"ctrl+shif+o": function() {
 			$("#files-form input[value='Edit']").click()
+		},
+		"ctrl+shift+s": function() {
+			$("li.search").click()
 		},
 		"ctrl+shift+x": function() {
 			if (this.getSelectedSubdirs().length < 1)
@@ -89,14 +92,20 @@ var dir = {
 
 		if (!this.poppingHistory) {
 			if (location.hash == "" || decodeURIComponent(location.hash.substr(1)) == this.path)
-				history.replaceState({path: this.path}, `File Manager - ${this.path}`, "#" + encodeURIComponent(this.path))
+				history.replaceState({path: this.path}, `PFM File Manager - ${this.path}`, "#" + encodeURIComponent(this.path))
 			else
-				history.pushState({path: this.path}, `File Manager - ${this.path}`, "#" + encodeURIComponent(this.path))
+				history.pushState({path: this.path}, `PFM File Manager - ${this.path}`, "#" + encodeURIComponent(this.path))
 		}
 		this.poppingHistory = false
 
 		this.sortFiles(this.sort, this.sortAsc)
-		$("#path").val(this.path)
+		$("input.path").val(this.path)
+		var pathEles = this.path.split(this.separator)
+		var span = $('span.path').empty()
+		for (var i = 0; i < pathEles.length - 1; i++) {
+			span.append($('<span>').addClass('nav').text(pathEles[i] + ' ' + this.separator))
+		}
+		span.append($('<span>').addClass('nav').text(pathEles[pathEles.length - 1]))
 
 		$("#subdirs").empty()
 		if (this.path != dir.separator)
@@ -207,8 +216,12 @@ var dir = {
 	makeDir: function(name) {
 		if (name == null)
 			return
-		if (name == "" || name.includes(dir.separator)) {
+		else if (name == "" || name.includes(dir.separator)) {
 			this.error(`Invalid directory name: ${name}`)
+			return
+		}
+		else if (this.isDir(name)) {
+			this.error(`Directory "${name}" already exists`)
 			return
 		}
 		return this.execute("make_dir", {"name": name}, "Created directory " + name)
@@ -238,6 +251,10 @@ var dir = {
 		if (to == "" || to.includes(dir.separator)) {
 			this.error(`Invalid directory name: ${to}`)
 			return
+		}
+
+		if (this.isDir(to)) {
+			this.error(`Directory "${to}" already exists`)
 		}
 
 		return this.execute("rename", {from: from, to: to}, `Renamed ${from} to ${to}`)
@@ -291,12 +308,17 @@ var dir = {
 			return
 
 		if (!this.isFile(from)) {
-			this.error(`"${from}" does not exist`)
+			this.error(`File "${from}" does not exist`)
 			return
 		}
 
 		if (to == "" || to.includes(dir.separator)) {
 			this.error(`Invalid name: ${to}`)
+			return
+		}
+
+		if (this.isFile(to)) {
+			this.error(`File "${to}" already exists`)
 			return
 		}
 
@@ -367,9 +389,24 @@ var dir = {
 			return
 		}
 
+		if (this.isFile(to)) {
+			this.error(`File "${to}" already exists`)
+			return
+		}
+
 		return this.execute("rename", {from: from, to: to}, `Renamed ${from} to ${to}`)
 	},
 	newFile: function(name) {
+		if (name == "" || name.includes(dir.separator)) { //TODO: search for invalid characters by OS
+			this.error(`Invalid file name: ${name}`)
+			return
+		}
+
+		if (this.isFile(name)) {
+			this.error(`File "${name}" already exists`)
+			return
+		}
+
 		return this.execute("new_file", {name: name}, `Created file ${name}`)
 	},
 	editFile: function(name) {
@@ -416,7 +453,7 @@ var dir = {
 				if (!confirm("Total combined file size is larger than 500 MiB and may take a long time to zip. Continue anyway?"))
 					return
 			}
-			if (totalSize > 1024*1024*1024) { //1GiB
+			if (totalSize > 1024*1024*1024) { //dont show progress for downloads larger than 1 GiB due to buffer limitations
 				var query = "?download&path=" + encodeURIComponent(this.path)
 				names.forEach(function(name) {
 					query += "&names[]=" + encodeURIComponent(name)
@@ -451,6 +488,10 @@ var dir = {
 		}
 	},
 	download_wprogress: function(names) {
+		if ($("#dl-progress:visible").length) { //this is a weak check and should be fixed
+			this.error("Download already in progress")
+			return false
+		}
 		$("#dl-progress").show()
 		if (names.length > 1 || this.lastInteraction == "subdirs")
 			filename = "files.zip"
@@ -521,6 +562,7 @@ var dir = {
 		var numFiles = $("#upload")[0].files.length
 		var data = new FormData($("#upload-form")[0])
 		data.set("path", this.path)
+		this.uploadPath = this.path
 		$("#ul-progress").show()
 		$.ajax({
 			url: "?upload",
@@ -549,20 +591,23 @@ var dir = {
 				if (typeof data == 'undefined' || data.error || !data.success) {
 					this.error(data.error ? data.error : "An unknown error occurred")
 					//If something was partially successful, update anyway
-					if (data.path && data.subdirs && data.files) {
+					if (data.path && data.subdirs && data.files && this.path == this.uploadPath) {
 						this.update(data)
 					}
 				}
 				else {
-					this.update(data)
+					if (this.path == this.uploadPath)
+						this.update(data)
 					var plural = numFiles > 1 ? "s" : ""
-					this.toast("Uploaded " + numFiles + " file" + plural)
+					this.toast("Uploaded " + numFiles + " file" + plural + " to " + this.uploadPath)
 				}
+				this.uploadPath = ''
 			}.bind(this),
 			error: function(req, status, error) {
 				$("#ul-progress").hide()
 				$("#ul-progress-bar").css("width", "0")
 				$("#ul-progress-text").html("&nbsp;")
+				this.uploadPath = ''
 				this.ajaxError(req, status, error)
 			}.bind(this),
 		})
@@ -604,18 +649,18 @@ var dir = {
 		this.pendingRequests--
 		if (this.pendingRequests == 0) {
 			clearInterval(this.indicatorInterval)
-			$("div.title").text("File Manager")
+			$("div.title").text("PFM File Manager")
 		}
 	},
 	indicator: function() {
 		var text = $("div.title").text()
-		if (text == "...File Manager...")
-			$("div.title").text("File Manager")
+		if (text == "...PFM File Manager...")
+			$("div.title").text("PFM File Manager")
 		else
 			$("div.title").text("." + text + ".")
 	},
 	clear: function() {
-		$("#path").val("")
+		$("input.path").val("")
 		$("#subdirs").empty()
 		$("#files").empty()
 		$("#search-results").empty()
@@ -721,6 +766,9 @@ var dir = {
 		$("ul.ribbon li.selected").removeClass("selected")
 		$("div.modal").hide()
 		$(".contextmenu").hide()
+		$("#filter").val('')
+		this.filter('')
+		$("#filter").blur()
 	},
 	loadSettings: function() {
 		if (localStorage) {
@@ -924,10 +972,14 @@ $(function() {
 		dir.resetUI()		
 		switch ($("#subdirs-action").val()) {
 			case "go":
-				dir.refresh($("#path").val())
+				var subdirs = dir.getSelectedSubdirs()
+				if (subdirs.length == 1) {
+					dir.resetUI()
+					dir.refresh(dir.path + dir.separator + subdirs[0])
+				}
 				break
 			case "up":
-				dir.refresh($("#path").val().split(dir.separator).slice(0,-1).join(dir.separator))
+				dir.refresh($("input.path").val().split(dir.separator).slice(0,-1).join(dir.separator))
 				break
 			case "new":
 				var name = prompt("Enter new directory name:")
@@ -1070,12 +1122,6 @@ $(function() {
 				}
 		}
 		e.preventDefault();
-	})
-
-	$("#path-form").submit(function(e) {
-		dir.resetUI()
-		dir.refresh($("#path").val())
-		e.preventDefault()
 	})
 
 	$("#edit-form > input[type='submit']").click(function(e) {
@@ -1342,7 +1388,10 @@ $(function() {
 			}
 			totalsize += file.size
 		}
-		if (totalsize > dir.maxUploadSize) {
+		if (dir.uploadPath != '') {
+			dir.error("Upload already in progress")
+		}
+		else if (totalsize > dir.maxUploadSize) {
 			dir.error("Selected files exceed maximum upload size limit of " + dir.formatSize(dir.maxUploadSize))
 		}
 		else if ($("#upload")[0].files.length > dir.maxUploadCount) {
@@ -1359,6 +1408,44 @@ $(function() {
 			$("#upload").val("")
 		}
 		e.preventDefault()
+	})
+
+	$('#addressbar').click(function(e) {
+		var target = $(e.target)
+		if (target.is($('span.path'))) {
+			$('span.path').hide()
+			$('input.path').show().focus().select()
+			e.stopPropagation()
+		}
+		else if (target.is($('#go'))) {
+			dir.resetUI()
+			dir.refresh($('input.path').val())
+			e.stopPropagation()
+		}
+		else if (target.is($('#up'))) {
+			$('#subdirs-action').val('up')
+			$('#subdirs-form').submit()
+			e.stopPropagation()
+		}
+		else if (target.parent().is($('span.path'))) {
+			dir.resetUI()
+			dir.refresh(dir.path.split(dir.separator).slice(0, target.index() + 1).join(dir.separator))
+		}
+	})
+
+	$('input.path').blur(function(e) {
+		$('input.path').val(dir.path).hide()
+		$('span.path').show()
+	})
+
+	$("input.path").keydown(function(e) {
+		if (e.which == 13) { //enter
+			dir.resetUI()
+			dir.refresh($("input.path").val())
+		}
+		if (e.which == 27) { //escape
+			$('input.path').blur()
+		}
 	})
 
 	$('html').on('dragover', function(e) {

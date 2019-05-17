@@ -37,5 +37,5 @@ else {
 }
 
 //User setup
-define('CHROOT_PATH',GLOBAL_CHROOT_PATH);
+define('CHROOT_PATH', GLOBAL_CHROOT_PATH);
 ?>
