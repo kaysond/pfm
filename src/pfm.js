@@ -1441,7 +1441,9 @@ $(function() {
 	$("input.path").keydown(function(e) {
 		if (e.which == 13) { //enter
 			dir.resetUI()
-			dir.refresh($("input.path").val())
+			dir.refresh($("input.path").val()).then(() => {
+				$('input.path').blur()
+			})
 		}
 		if (e.which == 27) { //escape
 			$('input.path').blur()

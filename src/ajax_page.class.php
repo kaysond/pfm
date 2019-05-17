@@ -265,5 +265,5 @@ CB
 
 		return $output;
 	}
-}CacheEnable  disk  /
+}
 ?>
