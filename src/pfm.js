@@ -18,7 +18,7 @@ var dir = {
 			else
 				$("#files-form input[value='Copy']").click()
 		},
-		"ctrl+shift+d": function() {
+		"delete": function() {
 			if (this.getSelectedSubdirs().length < 1)
 				$("#files-form input[value='Delete']").click()
 			else if (this.getSelectedFiles().length < 1)
@@ -829,6 +829,9 @@ var dir = {
 			case 32:
 				keyCombo += "space"
 				break
+			case 46:
+				keyCombo += "delete"
+				break
 			default:
 				if (keyCode < 91 && keyCode > 64) { //letters
 					var alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -895,6 +898,7 @@ var dir = {
 
 $(function() {
 	$("#header").hide()
+	$("#subheader").hide()
 	$("#manager").hide()
 	$.post({
 		url: "?is_logged_in",
@@ -912,6 +916,7 @@ $(function() {
 					dir.refresh("")
 				}
 				$("#header").show()
+				$("#subheader").show()
 				$("#manager").show()
 			}
 			else {
@@ -936,6 +941,7 @@ $(function() {
 					dir.loadSettings()
 					dir.refresh("").done(function() {
 						$("#header").show()
+						$("#subheader").show()
 						$("#manager").show()
 					})
 				}
@@ -954,6 +960,7 @@ $(function() {
 					dir.resetUI()
 					dir.clear()
 					$("#header").hide()
+					$("#subheader").hide()
 					$("#manager").hide()
 					$("#login").show()
 				}
@@ -1279,7 +1286,6 @@ $(function() {
 			"div.ribbon",
 			".contextmenu",
 			"#dir-select",
-			"#toast",
 		]
 		selectors.forEach(function(selector) {
 			if ($(selector + ":visible").length && !$(selector).has(e.target).length && !$(selector).is(e.target)) {
@@ -1320,7 +1326,12 @@ $(function() {
 		}
 		dir.resetUI()
 		$("#files-menu").hide().removeClass("ribbon").addClass("contextmenu")
-		$("#files-menu").css({'top':e.pageY,'left':e.pageX}).show()
+		var top = 0
+		if (e.pageY + $('#files-menu').height() > $(window).height())
+			$("#files-menu").css({'bottom': $(window).height() - e.pageY,'left': e.pageX, 'top': ''}).show()	
+		else
+			$("#files-menu").css({'top': e.pageY, 'left': e.pageX, 'bottom': ''}).show()	
+		
 		return false //stop propagation and default
 	})
 	$("#files").on("click keyup contextmenu", function() {
@@ -1338,7 +1349,10 @@ $(function() {
 		}
 		dir.resetUI()
 		$("#subdirs-menu").hide().removeClass("ribbon").addClass("contextmenu")
-		$("#subdirs-menu").css({'top':e.pageY,'left':e.pageX}).show()
+		if (e.pageY + $('#subdirs-menu').height() > $(window).height())
+			$("#subdirs-menu").css({'bottom': $(window).height() - e.pageY,'left': e.pageX, 'top': ''}).show()	
+		else
+			$("#subdirs-menu").css({'top': e.pageY, 'left': e.pageX, 'bottom': ''}).show()	
 		return false //stop propagation and default
 	})
 	$("#subdirs").on("dblclick", "tr", function(e) {
@@ -1417,20 +1431,26 @@ $(function() {
 			$('input.path').show().focus().select()
 			e.stopPropagation()
 		}
-		else if (target.is($('#go'))) {
-			dir.resetUI()
-			dir.refresh($('input.path').val())
-			e.stopPropagation()
-		}
-		else if (target.is($('#up'))) {
-			$('#subdirs-action').val('up')
-			$('#subdirs-form').submit()
-			e.stopPropagation()
-		}
 		else if (target.parent().is($('span.path'))) {
 			dir.resetUI()
 			dir.refresh(dir.path.split(dir.separator).slice(0, target.index() + 1).join(dir.separator))
 		}
+	})
+
+	$('#go').mousedown(function(e) {
+		e.preventDefault() //prevent input.path blur event
+	})
+
+	$('#go').click(function(e) {
+		dir.resetUI()
+		dir.refresh($('input.path').val()).then(() => {
+			$('input.path').blur()
+		})
+	})
+	
+	$('#up').click(function(e) {
+		$('#subdirs-action').val('up')
+		$('#subdirs-form').submit()
 	})
 
 	$('input.path').blur(function(e) {

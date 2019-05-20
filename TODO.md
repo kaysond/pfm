@@ -11,14 +11,11 @@
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
 	
-* change delete hotkey to del key
 * context menus should appear on entire section not just rows
 * add directories icon (s?)
 * fix search ribbon ui
 * fix address bar span text 1px too low
 * fix address bar span text overflow
-* fix go arrow button not working due to input onblur
-* context menu shouldnt extend below window
 * handle response format errors on login
 * column widths
 * credit minifiers, jquery, normalize, skeleton
