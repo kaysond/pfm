@@ -336,6 +336,10 @@ th.hide, td.hide {
 	margin: 0;
 }
 
+#dir-select > tr.selected {
+	background: #E1E1E1;
+}
+
 div.modal {
 	z-index: 10;
 	text-align: left;
