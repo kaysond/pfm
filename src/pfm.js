@@ -730,7 +730,7 @@ var dir = {
 		}
 		$("div.modal.dir-select th").text(title)
 		$("#dir-select").empty()
-		$("#dir-select").append($("<tr>").append($("<td>").css("text-indent", "0rem").text(dir.separator).append($("<input type='hidden' value='" + dir.separator + "'>"))))
+		$("#dir-select").append($("<tr>").append($("<td>").css("text-indent", "0rem").attr("title", dir.separator).text(dir.separator).append($("<input type='hidden' value='" + dir.separator + "'>"))))
 		this.selectDir($("#dir-select tr"))
 		$("div.modal.dir-select").show()
 	},
@@ -750,7 +750,7 @@ var dir = {
 						path = ""
 					var indent = path.split(dir.separator).length * 3
 					data.subdirs.reverse().forEach(function(subdir) {
-						ele.after($("<tr>").append($("<td>").css("text-indent", indent + "rem").text(subdir).append("<input type='hidden' value='" + path + dir.separator + subdir + "'>")))
+						ele.after($("<tr>").append($("<td>").css("text-indent", indent + "rem").text(subdir).attr("title", subdir).append("<input type='hidden' value='" + path + dir.separator + subdir + "'>")))
 					})
 				}
 			})

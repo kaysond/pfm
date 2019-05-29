@@ -61,7 +61,7 @@ $callbacks_map = array('login' => 'login','logout' => 'logout','is_logged_in' =>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>PFM File Manager</title>
-<script src="jquery-3.4.1.js"></script><script src="pfm.js"></script><link rel="stylesheet" type="text/css" href="normalize.css"><link rel="stylesheet" type="text/css" href="skeleton.css"><link rel="stylesheet" type="text/css" href="pfm.css"><link rel="stylesheet" type="text/css" href="Roboto.css"></head>
+<script src="jquery-3.4.1.js"></script><script src="pfm.js"></script><link rel="stylesheet" type="text/css" href="normalize.css"><link rel="stylesheet" type="text/css" href="skeleton.css"><link rel="stylesheet" type="text/css" href="icons.css"><link rel="stylesheet" type="text/css" href="pfm.css"><link rel="stylesheet" type="text/css" href="Roboto.css"></head>
 
 <body>
 
@@ -166,9 +166,7 @@ $callbacks_map = array('login' => 'login','logout' => 'logout','is_logged_in' =>
 		<div>
 			<table class="subdirs">
 				<thead><tr><th class="subdir">
-<!--<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 0 0">
-<path d="M857 118v393q0 22-15 38t-38 15h-393q-23 0-38 16t-16 38v36q0 22-15 38t-38 15h-179q-22 0-38-15t-16-38v-536q0-22 16-38t38-16h679q22 0 38 16t15 38z m72 393v-393q0-51-37-88t-88-37h-679q-51 0-88 37t-37 88v536q0 51 37 88t88 37h179q51 0 88-37t37-88v-18h375q51 0 88-37t37-88z" horiz-adv-x="928.6" />
-</svg>-->&#8203;</th></tr></thead>
+&#61716;</th></tr></thead>
 				<tbody id="subdirs"></tbody>
 			</table>
 		</div>

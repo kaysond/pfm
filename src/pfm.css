@@ -207,6 +207,10 @@ tr.subdir.selected {
 	background: #E1E1E1;
 }
 
+th.subdir {
+	font-family: icons;
+}
+
 td.subdir {
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -243,7 +247,7 @@ div.ribbon.regex-rename, div.ribbon.search {
 
 div.ribbon label {
 	display: inline;
-	margin-left: 0.5rem;
+	margin: 0 0.5rem;
 }
 
 input.files[type="checkbox"] {

@@ -10,9 +10,8 @@
 			}
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
-	
+
 * context menus should appear on entire section not just rows
-* add directories icon (s?)
 * fix search ribbon ui
 * fix address bar span text 1px too low
 * fix address bar span text overflow

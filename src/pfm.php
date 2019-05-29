@@ -20,6 +20,7 @@ $page->add_js('jquery-3.4.1.js');
 $page->add_js('pfm.js');
 $page->add_css('normalize.css');
 $page->add_css('skeleton.css');
+$page->add_css('icons.css');
 $page->add_css('pfm.css');
 $page->add_css('Roboto.css');
 $page->add_callbacks_from_file('pfm.callbacks.php');
