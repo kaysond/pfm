@@ -636,6 +636,25 @@ var dir = {
 		if (error == "Not logged in")
 			$("#logout").click()
 	},
+	showContextMenu: function(event) {
+		dir.resetUI()
+		if (this.lastInteraction == "files") {			
+			$("#files-menu").hide().removeClass("ribbon").addClass("contextmenu")
+			var top = 0
+			if (event.pageY + $('#files-menu').height() > $(window).height() - 20)
+				$("#files-menu").css({'bottom': $(window).height() - event.pageY,'left': event.pageX, 'top': ''}).show()	
+			else
+				$("#files-menu").css({'top': event.pageY, 'left': event.pageX, 'bottom': ''}).show()
+		}
+		else {
+			$("#subdirs-menu").hide().removeClass("ribbon").addClass("contextmenu")
+			var top = 0
+			if (event.pageY + $('#subdirs-menu').height() > $(window).height() - 20)
+				$("#subdirs-menu").css({'bottom': $(window).height() - event.pageY,'left': event.pageX, 'top': ''}).show()	
+			else
+				$("#subdirs-menu").css({'top': event.pageY, 'left': event.pageX, 'bottom': ''}).show()
+		}
+	},
 	clearErrors: function() {
 		$("#error").fadeOut()
 	},
@@ -1317,49 +1336,51 @@ $(function() {
 		if (!$(e.target).is("a, input"))
 			$(this).find("input").first().click()
 	})
+	$("div.files").on("contextmenu", function(e) {
+		$("tr.file.selected input").prop("checked", false)
+		$("tr.file.selected").removeClass("selected")
+		dir.lastInteraction = "files"
+		dir.showContextMenu(e)
+		return false
+	})
 	$("#files").on("contextmenu", "tr", function(e) {
 		dir.lastInteraction = "files"
-		if (!this.className.includes("selected")) {
+		if (!$(this).hasClass("selected")) {
 			$("tr.file.selected input").prop("checked", false)
 			$("tr.file.selected").removeClass("selected")
 			$(this).click()
 		}
-		dir.resetUI()
-		$("#files-menu").hide().removeClass("ribbon").addClass("contextmenu")
-		var top = 0
-		if (e.pageY + $('#files-menu').height() > $(window).height())
-			$("#files-menu").css({'bottom': $(window).height() - e.pageY,'left': e.pageX, 'top': ''}).show()	
-		else
-			$("#files-menu").css({'top': e.pageY, 'left': e.pageX, 'bottom': ''}).show()	
-		
-		return false //stop propagation and default
+		dir.showContextMenu(e)
+		return false
 	})
-	$("#files").on("click keyup contextmenu", function() {
+	$("#files").on("click keyup", function() {
 		dir.lastInteraction = "files"
 	})
 
 	$("#subdirs").on("click", "tr", function() {
-		$(this).toggleClass("selected")
+		if ($(this).text() != "..")
+			$(this).toggleClass("selected")
+	})
+	$("div.subdirs").on("contextmenu", function(e) {
+		dir.lastInteraction = "subdirs"
+		$("tr.subdir.selected").removeClass("selected")
+		dir.showContextMenu(e)
+		return false //stop propagation and default
 	})
 	$("#subdirs").on("contextmenu", "tr", function(e) {
 		dir.lastInteraction = "subdirs"
-		if (!this.className.includes("selected")) {
+		if (!$(this).hasClass("selected")) {
 			$("tr.subdir.selected").removeClass("selected")
 			$(this).addClass("selected")
 		}
-		dir.resetUI()
-		$("#subdirs-menu").hide().removeClass("ribbon").addClass("contextmenu")
-		if (e.pageY + $('#subdirs-menu').height() > $(window).height())
-			$("#subdirs-menu").css({'bottom': $(window).height() - e.pageY,'left': e.pageX, 'top': ''}).show()	
-		else
-			$("#subdirs-menu").css({'top': e.pageY, 'left': e.pageX, 'bottom': ''}).show()	
+		dir.showContextMenu(e)
 		return false //stop propagation and default
 	})
 	$("#subdirs").on("dblclick", "tr", function(e) {
 		dir.refresh(dir.path + dir.separator + $(this).text())
 		e.preventDefault()
 	})
-	$("#subdirs").on("click contextmenu", function(e) {
+	$("#subdirs").on("click", function(e) {
 		dir.lastInteraction = "subdirs"
 	})
 
