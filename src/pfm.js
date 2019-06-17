@@ -213,10 +213,19 @@ var dir = {
 	isDir: function(name) {
 		return this.subdirs.includes(name)
 	},
+	isValidName: function(name) {
+		for (var i = 0; i < this.invalidChars.length; i++) {
+			if (name.indexOf(this.invalidChars[i]) != -1)
+				return false
+		}
+		if (name == "" || name == ".." || name == ".")
+			return false
+		return true
+	},
 	makeDir: function(name) {
 		if (name == null)
 			return
-		else if (name == "" || name.includes(dir.separator)) {
+		else if (!this.isValidName(name)) {
 			this.error(`Invalid directory name: ${name}`)
 			return
 		}
@@ -248,7 +257,7 @@ var dir = {
 			return
 		}
 
-		if (to == "" || to.includes(dir.separator)) {
+		if (!this.isValidName(to)) {
 			this.error(`Invalid directory name: ${to}`)
 			return
 		}
@@ -312,7 +321,7 @@ var dir = {
 			return
 		}
 
-		if (to == "" || to.includes(dir.separator)) {
+		if (!this.isValidName(to)) {
 			this.error(`Invalid name: ${to}`)
 			return
 		}
@@ -384,7 +393,7 @@ var dir = {
 			return
 		}
 
-		if (to == "" || to.includes(dir.separator)) { //TODO: search for invalid characters by OS
+		if (!this.isValidName(to)) {
 			this.error(`Invalid file name: ${to}`)
 			return
 		}
@@ -397,7 +406,7 @@ var dir = {
 		return this.execute("rename", {from: from, to: to}, `Renamed ${from} to ${to}`)
 	},
 	newFile: function(name) {
-		if (name == "" || name.includes(dir.separator)) { //TODO: search for invalid characters by OS
+		if (!this.isValidName(name)) {
 			this.error(`Invalid file name: ${name}`)
 			return
 		}
@@ -952,7 +961,7 @@ $(function() {
 			dataType: "json",
 			success: function(data) {
 				if (data.error || !data.success) {
-					$("#login-errors").text(data.error).show()
+					dir.error(data.error)
 				}
 				else {
 					$("#login-errors").text("").hide()
@@ -964,7 +973,8 @@ $(function() {
 						$("#manager").show()
 					})
 				}
-			}
+			},
+			error: dir.ajaxError.bind(dir)
 		})
 		$("#password").val("")
 		e.preventDefault()

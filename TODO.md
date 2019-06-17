@@ -10,23 +10,31 @@
 			}
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
-
-* fix search ribbon ui
-* fix address bar span text 1px too low
-* fix address bar span text overflow
-* handle response format errors on login
+  * fix login form user
 * column widths
 
-* add download/upload abort
-* duplicate subdirs
-* multiple upload/download
-* implement drag/drop copy/move
-* add invalid characters by OS JS
-* validate upload filenames and size
-* validate all renames on front end
-* validate full copies and moves on back end
-* improve file class for windows
-* combine dir/file copies/moves, etc into one function
-* fix vertical alignment issues between text input and buttons
-* remove ` ` ? (aka old IE compatibility)
-* automate testing
+* UI Improvements
+  * fix search ribbon ui
+  * fix address bar span text 1px too low
+  * fix address bar span text overflow
+  * fix vertical alignment issues between text input and buttons
+
+* Testing
+  * Check Edge, Chrome, Safari
+  * Automate
+
+* Additional Features
+  * add download/upload abort
+  * duplicate subdirs
+  * multiple upload/download
+  * implement drag/drop copy/move
+
+* UX Improvmenets
+  * validate upload filenames and size
+  * validate all renames on front end
+  * validate full copies and moves on back end
+
+* Backend improvements
+  * improve file class for windows
+  * combine dir/file copies/moves, etc into one function
+  * remove ` ` ? (aka old IE compatibility)

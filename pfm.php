@@ -148,8 +148,7 @@ $callbacks_map = array('login' => 'login','logout' => 'logout','is_logged_in' =>
 <div id="login" class="container">
 	<div class="row">
 		<div class="twelve columns">
-			<h1>File Manager</h1>
-			<div id="login-errors" class="errors"></div>
+			<h1>PFM File Manager</h1>
 			<form id="login-form">
 					<input type="password" id="password">
 					<input type="submit" value="Login">
