@@ -11,19 +11,20 @@
 		}
   * ACL_FILE - same as ACL but also supports brute force protections
   * fix login form user
-* column widths
 
 * UI Improvements
   * fix search ribbon ui
   * fix address bar span text 1px too low
   * fix address bar span text overflow
   * fix vertical alignment issues between text input and buttons
+  * Mobile CSS
 
 * Testing
   * Check Edge, Chrome, Safari
   * Automate
 
 * Additional Features
+  * resizable columns
   * add download/upload abort
   * duplicate subdirs
   * multiple upload/download
@@ -31,7 +32,6 @@
 
 * UX Improvmenets
   * validate upload filenames and size
-  * validate all renames on front end
   * validate full copies and moves on back end
 
 * Backend improvements

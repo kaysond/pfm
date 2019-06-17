@@ -225,14 +225,22 @@ var dir = {
 	makeDir: function(name) {
 		if (name == null)
 			return
-		else if (!this.isValidName(name)) {
+
+		if (!this.isValidName(name)) {
 			this.error(`Invalid directory name: ${name}`)
 			return
 		}
-		else if (this.isDir(name)) {
+
+		if (this.isDir(name)) {
 			this.error(`Directory "${name}" already exists`)
 			return
 		}
+
+		if (this.isFile(name)) {
+			this.error(`"${name}" is a file`)
+			return
+		}
+
 		return this.execute("make_dir", {"name": name}, "Created directory " + name)
 	},
 	removeDirs: function(names) {
@@ -264,6 +272,12 @@ var dir = {
 
 		if (this.isDir(to)) {
 			this.error(`Directory "${to}" already exists`)
+			return
+		}
+
+		if (this.isFile(to)) {
+			this.error(`"${to}" is a file`)
+			return
 		}
 
 		return this.execute("rename", {from: from, to: to}, `Renamed ${from} to ${to}`)
@@ -328,6 +342,11 @@ var dir = {
 
 		if (this.isFile(to)) {
 			this.error(`File "${to}" already exists`)
+			return
+		}
+
+		if (this.isDir(to)) {
+			this.error(`"${to}" is a directory`)
 			return
 		}
 
@@ -403,6 +422,11 @@ var dir = {
 			return
 		}
 
+		if (this.isDir(to)) {
+			this.error(`"${to}" is a directory`)
+			return
+		}
+
 		return this.execute("rename", {from: from, to: to}, `Renamed ${from} to ${to}`)
 	},
 	newFile: function(name) {
@@ -413,6 +437,11 @@ var dir = {
 
 		if (this.isFile(name)) {
 			this.error(`File "${name}" already exists`)
+			return
+		}
+
+		if (this.isDir(name)) {
+			this.error(`"${name}" is a directory`)
 			return
 		}
 
