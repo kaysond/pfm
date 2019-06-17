@@ -17,7 +17,6 @@
 * fix address bar span text overflow
 * handle response format errors on login
 * column widths
-* credit minifiers, jquery, normalize, skeleton
 
 * add download/upload abort
 * duplicate subdirs
